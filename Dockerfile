@@ -1,38 +1,44 @@
-FROM node:20-alpine AS base
+# Dockerfile para produção do Parafa Frontend
+FROM node:20-alpine AS builder
 
-# Install dependencies only when needed
-FROM base AS deps
-RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-COPY package.json package-lock.json* ./
-RUN npm ci
+# Copiar arquivos de dependências
+COPY package*.json ./
 
-# Rebuild the source code only when needed
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+# Instalar dependências
+RUN npm ci --only=production
+
+# Copiar código fonte
 COPY . .
 
+# Build da aplicação
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production
 RUN npm run build
 
-# Production image
-FROM base AS runner
+# Imagem final
+FROM node:20-alpine AS runner
+
 WORKDIR /app
 
-ENV NODE_ENV production
-
+# Criar usuário não-root
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
+# Copiar arquivos necessários
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# Configurar usuário
 USER nextjs
 
+# Expor porta
 EXPOSE 3000
+ENV PORT=3000
+ENV NODE_ENV=production
+ENV HOSTNAME="0.0.0.0"
 
-ENV PORT 3000
-
+# Comando de inicialização
 CMD ["node", "server.js"]
