@@ -3,17 +3,20 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Configurar limites de memória do Node
+ENV NODE_OPTIONS="--max-old-space-size=1024"
+ENV NEXT_TELEMETRY_DISABLED=1
+
 # Copiar arquivos de dependências
 COPY package*.json ./
 
-# Instalar dependências
-RUN npm ci --only=production
+# Instalar dependências de produção E desenvolvimento (precisa para build)
+RUN npm ci
 
 # Copiar código fonte
 COPY . .
 
-# Build da aplicação
-ENV NEXT_TELEMETRY_DISABLED=1
+# Build da aplicação com configurações otimizadas
 ENV NODE_ENV=production
 RUN npm run build
 

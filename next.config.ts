@@ -4,8 +4,23 @@ const nextConfig: NextConfig = {
   output: "standalone",
   compress: true,
   generateEtags: true,
+  // Otimizações de build
+  swcMinify: true,
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production",
+  },
+  experimental: {
+    // Reduzir uso de memória durante o build
+    memoryBasedWorkersCount: true,
+  },
   images: {
-    domains: ["parafa.com.br"],
+    // Migrar de domains para remotePatterns (fix do warning)
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "parafa.com.br",
+      },
+    ],
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 60,
   },
