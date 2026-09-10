@@ -115,7 +115,7 @@ export default async function EstadoDetalhePage({ params }: PageProps) {
                       <MapPin className="size-4" /> {empresa.neighborhood} — {empresa.city}
                     </span>
                     <Link
-                      href={`/empresas/${empresa.id}`}
+                      href={empresa.url}
                       className="inline-flex items-center gap-1 text-sm font-semibold text-primary"
                     >
                       Ver <ArrowRight className="size-3.5" />

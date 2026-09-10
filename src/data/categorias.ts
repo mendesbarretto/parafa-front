@@ -53,3 +53,5 @@ export function getEmpresasPorCategoria(slug: string): Empresa[] {
   if (!categoria) return [];
   return empresas.filter((e) => categoria.aliases.includes(e.categoria));
 }
+
+

@@ -4,8 +4,6 @@ const nextConfig: NextConfig = {
   output: "standalone",
   compress: true,
   generateEtags: true,
-  // Otimizações de build
-  swcMinify: true,
   compiler: {
     removeConsole: process.env.NODE_ENV === "production",
   },

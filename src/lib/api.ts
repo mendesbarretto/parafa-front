@@ -6,13 +6,22 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ||
 export interface Empresa {
   id: string;
   name: string;
+  slogan?: string;
   description: string;
+  address: string;
+  number: string;
+  complement?: string;
   neighborhood: string;
+  zipcode: string;
   city: string;
   state: string;
+  site?: string;
+  email?: string;
   category_id: number;
   city_id: string;
   url: string;
+  status: string;
+  category_name?: string;
 }
 
 export interface Categoria {
