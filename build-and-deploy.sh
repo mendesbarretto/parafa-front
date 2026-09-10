@@ -5,8 +5,8 @@ set -e
 echo "🚀 Build Local + Deploy Remoto"
 
 # Configurações (ajuste conforme necessário)
-SERVIDOR="usuario@servidor.com"
-PASTA_REMOTA="/home/parafa-frontend"
+SERVIDOR="root@147.182.248.223"
+PASTA_REMOTA="/home/parafa-fron"
 
 # Build local
 echo "🏗️  Fazendo build local..."

@@ -24,6 +24,20 @@ fi
 echo "⏸️  Parando aplicação..."
 docker-compose -f docker-compose.micro.yml down 2>/dev/null || true
 
+# Criar .dockerignore específico para prebuild
+cat > .dockerignore.prebuild << 'EOF'
+node_modules
+.git
+.env.local
+.env.production.local
+.env.development.local
+.env.test.local
+.DS_Store
+*.log
+.next/cache
+.next/trace
+EOF
+
 # Dockerfile que só copia arquivos (sem build)
 cat > Dockerfile.prebuild << 'EOF'
 FROM node:20-alpine AS runner
@@ -49,10 +63,17 @@ ENV HOSTNAME="0.0.0.0"
 CMD ["node", "server.js"]
 EOF
 
-# Build da imagem
+# Build da imagem usando dockerignore específico
 echo "📦 Criando imagem..."
+cp .dockerignore.prebuild .dockerignore.temp
+mv .dockerignore .dockerignore.original
+mv .dockerignore.temp .dockerignore
+
 docker build -f Dockerfile.prebuild -t parafa-frontend-prebuild .
-rm Dockerfile.prebuild
+
+# Restaurar dockerignore original e limpar
+mv .dockerignore.original .dockerignore
+rm Dockerfile.prebuild .dockerignore.prebuild
 
 # Subir com docker-compose otimizado
 echo "🚀 Iniciando aplicação..."
