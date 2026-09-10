@@ -1,0 +1,47 @@
+# Dockerfile otimizado para build em servidor pequeno
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Configurar Node.js para usar POUCA memória
+ENV NODE_OPTIONS="--max-old-space-size=800 --gc-interval=100 --expose-gc"
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Copiar package files
+COPY package*.json ./
+
+# Instalar dependências com configurações de baixa memória
+RUN npm ci --prefer-offline --no-audit --no-fund --maxsockets 1
+
+# Copiar código
+COPY . .
+
+# Build com configurações ultra otimizadas
+ENV NODE_ENV=production
+RUN node --expose-gc --max-old-space-size=800 ./node_modules/.bin/next build
+
+# Imagem final - bem pequena
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+# Criar usuário
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# Copiar apenas arquivos necessários
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
+
+EXPOSE 3000
+
+# Runtime com pouca memória
+ENV NODE_OPTIONS="--max-old-space-size=256"
+ENV PORT=3000
+ENV NODE_ENV=production
+ENV HOSTNAME="0.0.0.0"
+
+CMD ["node", "server.js"]
