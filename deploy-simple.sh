@@ -26,7 +26,8 @@ sleep 15
 if docker ps | grep -q "parafa-frontend"; then
     echo "✅ Deploy OK!"
     echo "🌐 http://localhost:3000"
-    docker stats parafa-frontend --no-stream --format "💾 RAM: {{.MemUsage}} / {{.MemLimit}} ({{.MemPerc}})"
+    echo "💾 Uso de RAM:"
+    docker stats parafa-frontend --no-stream --format "   {{.MemUsage}} / {{.MemLimit}} ({{.MemPerc}})"
 else
     echo "❌ Erro no deploy"
     docker logs parafa-frontend --tail 20

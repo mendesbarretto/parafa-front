@@ -4,21 +4,21 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Configurar Node.js para usar POUCA memória
-ENV NODE_OPTIONS="--max-old-space-size=800 --gc-interval=100 --expose-gc"
+ENV NODE_OPTIONS="--max-old-space-size=800"
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Copiar package files
 COPY package*.json ./
 
 # Instalar dependências com configurações de baixa memória
-RUN npm ci --prefer-offline --no-audit --no-fund --maxsockets 1
+RUN npm ci --prefer-offline --no-audit --no-fund
 
 # Copiar código
 COPY . .
 
 # Build com configurações ultra otimizadas
 ENV NODE_ENV=production
-RUN node --expose-gc --max-old-space-size=800 ./node_modules/.bin/next build
+RUN npm run build
 
 # Imagem final - bem pequena
 FROM node:20-alpine AS runner
