@@ -36,7 +36,7 @@ export function EmpresasClient() {
   const loadEmpresas = async () => {
     try {
       setLoading(true);
-      const params: { per_page?: number; search?: string; state?: string } = { per_page: 20 };
+      const params: { per_page?: number; search?: string; state?: string } = { per_page: 50 };
       
       if (termo.trim()) {
         params.search = termo.trim();

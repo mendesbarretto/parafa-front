@@ -1,30 +1,13 @@
-import { SiteHeader } from "@/components/SiteHeader";
-import { SiteFooter } from "@/components/SiteFooter";
-import { ChevronRight } from "lucide-react";
-
-export default function EstadoUfLoading() {
+export default function Loading() {
   return (
     <div className="min-h-screen bg-background">
-      <SiteHeader />
-
+      <div className="h-16 bg-secondary/50 animate-pulse" />
+      
       <main>
         <section className="hero-surface">
           <div className="mx-auto max-w-6xl px-5 py-14 md:py-16">
-            <nav className="flex items-center gap-1.5 text-sm text-primary-foreground/70">
-              <div className="h-4 w-12 animate-pulse rounded bg-secondary" />
-              <ChevronRight className="size-3.5" />
-              <div className="h-4 w-16 animate-pulse rounded bg-secondary" />
-              <ChevronRight className="size-3.5" />
-              <div className="h-4 w-24 animate-pulse rounded bg-secondary" />
-            </nav>
-
-            <div className="mt-6 flex items-center gap-3">
-              <div className="size-12 animate-pulse rounded-xl bg-secondary" />
-              <div className="space-y-2">
-                <div className="h-8 w-48 animate-pulse rounded bg-secondary" />
-                <div className="h-4 w-32 animate-pulse rounded bg-secondary" />
-              </div>
-            </div>
+            <div className="h-8 w-48 animate-pulse rounded bg-secondary" />
+            <div className="mt-6 h-12 w-96 animate-pulse rounded bg-secondary" />
           </div>
         </section>
 
@@ -49,8 +32,6 @@ export default function EstadoUfLoading() {
           </div>
         </div>
       </main>
-
-      <SiteFooter />
     </div>
   );
 }

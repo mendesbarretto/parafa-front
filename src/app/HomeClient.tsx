@@ -57,7 +57,7 @@ export function HomeClient() {
   const loadDestaques = async () => {
     try {
       setLoadingDestaques(true);
-      const data = await fetchEmpresas({ per_page: 6 });
+      const data = await fetchEmpresas({ per_page: 12 });
       setDestaques(data.data);
     } catch (error) {
       console.error("Erro ao carregar destaques:", error);

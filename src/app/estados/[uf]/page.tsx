@@ -3,7 +3,7 @@ import { MapPin, Star, BadgeCheck, ArrowRight, ChevronRight } from "lucide-react
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { AdSlot } from "@/components/AdSlot";
-import { fetchEmpresas, fetchEstados } from "@/lib/api";
+import { fetchEmpresas } from "@/lib/api";
 import { EmpresaCard } from "@/components/EmpresaCard";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -15,14 +15,27 @@ interface PageProps {
 }
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 300; // Revalida a cada 5 minutos
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   try {
     const { uf } = await params;
-    const estados = await fetchEstados();
-    const estado = estados.find(e => e.toLowerCase() === uf.toLowerCase());
+    const ufUpper = uf.toUpperCase();
     
-    if (!estado) {
+    // Mapeamento de UF para nome do estado
+    const estadoNomes: Record<string, string> = {
+      'AC': 'Acre', 'AL': 'Alagoas', 'AP': 'Amapá', 'AM': 'Amazonas',
+      'BA': 'Bahia', 'CE': 'Ceará', 'DF': 'Distrito Federal', 'ES': 'Espírito Santo',
+      'GO': 'Goiás', 'MA': 'Maranhão', 'MT': 'Mato Grosso', 'MS': 'Mato Grosso do Sul',
+      'MG': 'Minas Gerais', 'PA': 'Pará', 'PB': 'Paraíba', 'PE': 'Pernambuco',
+      'PI': 'Piauí', 'RJ': 'Rio de Janeiro', 'RN': 'Rio Grande do Norte',
+      'RS': 'Rio Grande do Sul', 'RO': 'Rondônia', 'RR': 'Roraima', 'SC': 'Santa Catarina',
+      'SP': 'São Paulo', 'SE': 'Sergipe', 'TO': 'Tocantins'
+    };
+    
+    const estadoNome = estadoNomes[ufUpper];
+    
+    if (!estadoNome) {
       return {
         title: "Estado não encontrado | Parafa",
         robots: {
@@ -32,11 +45,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     }
 
     return {
-      title: `Empresas em ${estado} | Parafa`,
-      description: `Encontre empresas cadastradas em ${estado}: telefone, endereço, horários e avaliações.`,
+      title: `Empresas em ${estadoNome} | Parafa`,
+      description: `Encontre empresas cadastradas em ${estadoNome}: telefone, endereço, horários e avaliações.`,
       openGraph: {
-        title: `Empresas em ${estado} | Parafa`,
-        description: `Busque empresas em ${estado} com telefone, endereço e avaliações.`,
+        title: `Empresas em ${estadoNome} | Parafa`,
+        description: `Busque empresas em ${estadoNome} com telefone, endereço e avaliações.`,
       },
     };
   } catch {
@@ -49,14 +62,26 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function EstadoDetalhePage({ params }: PageProps) {
   try {
     const { uf } = await params;
-    const estados = await fetchEstados();
-    const estado = estados.find(e => e.toLowerCase() === uf.toLowerCase());
+    const ufUpper = uf.toUpperCase();
     
-    if (!estado) {
+    // Mapeamento de UF para nome do estado
+    const estadoNomes: Record<string, string> = {
+      'AC': 'Acre', 'AL': 'Alagoas', 'AP': 'Amapá', 'AM': 'Amazonas',
+      'BA': 'Bahia', 'CE': 'Ceará', 'DF': 'Distrito Federal', 'ES': 'Espírito Santo',
+      'GO': 'Goiás', 'MA': 'Maranhão', 'MT': 'Mato Grosso', 'MS': 'Mato Grosso do Sul',
+      'MG': 'Minas Gerais', 'PA': 'Pará', 'PB': 'Paraíba', 'PE': 'Pernambuco',
+      'PI': 'Piauí', 'RJ': 'Rio de Janeiro', 'RN': 'Rio Grande do Norte',
+      'RS': 'Rio Grande do Sul', 'RO': 'Rondônia', 'RR': 'Roraima', 'SC': 'Santa Catarina',
+      'SP': 'São Paulo', 'SE': 'Sergipe', 'TO': 'Tocantins'
+    };
+    
+    const estadoNome = estadoNomes[ufUpper];
+    
+    if (!estadoNome) {
       notFound();
     }
 
-    const empresasData = await fetchEmpresas({ state: estado.toUpperCase(), per_page: 20 });
+    const empresasData = await fetchEmpresas({ state: ufUpper, per_page: 50 });
 
     return (
       <div className="min-h-screen bg-background">
@@ -74,16 +99,16 @@ export default async function EstadoDetalhePage({ params }: PageProps) {
                   Estados
                 </Link>
                 <ChevronRight className="size-3.5" />
-                <span className="font-medium text-primary-foreground">{estado}</span>
+                <span className="font-medium text-primary-foreground">{estadoNome}</span>
               </nav>
 
               <div className="mt-6 flex items-center gap-3">
                 <span className="grid size-12 place-items-center rounded-xl bg-secondary text-sm font-extrabold text-primary">
-                  {estado.toUpperCase()}
+                  {ufUpper}
                 </span>
                 <div>
                   <h1 className="text-3xl font-extrabold tracking-tight text-primary-foreground md:text-4xl">
-                    Empresas em {estado}
+                    Empresas em {estadoNome}
                   </h1>
                   <p className="mt-1 text-sm text-primary-foreground/80">
                     {empresasData.data.length} empresas cadastradas
