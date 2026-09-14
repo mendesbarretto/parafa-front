@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState, useEffect } from "react";
-import { Search, MapPin, BadgeCheck, ArrowRight, Phone } from "lucide-react";
+import { Search, MapPin, BadgeCheck, ArrowRight, Phone, ChevronLeft, ChevronRight } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { AdSlot } from "@/components/AdSlot";
@@ -15,28 +15,42 @@ export function EmpresasClient() {
   const [categoria, setCategoria] = useState("Todas");
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalResults, setTotalResults] = useState(0);
 
   useEffect(() => {
     // Ler parâmetros da URL ao carregar
     const params = new URLSearchParams(window.location.search);
     const searchParam = params.get("search");
     const locationParam = params.get("location");
+    const pageParam = params.get("page");
     
     if (searchParam) setTermo(searchParam);
     if (locationParam) setLocation(locationParam);
+    if (pageParam) setCurrentPage(parseInt(pageParam, 10));
     
     loadEmpresas();
   }, []);
 
   useEffect(() => {
     // Recarregar quando os filtros mudam
+    setCurrentPage(1); // Resetar para página 1 quando mudar filtros
     loadEmpresas();
   }, [termo, location]);
+
+  useEffect(() => {
+    // Recarregar quando mudar de página
+    loadEmpresas();
+  }, [currentPage]);
 
   const loadEmpresas = async () => {
     try {
       setLoading(true);
-      const params: { per_page?: number; search?: string; state?: string } = { per_page: 50 };
+      const params: { per_page?: number; search?: string; state?: string; page?: number } = { 
+        per_page: 20,
+        page: currentPage
+      };
       
       if (termo.trim()) {
         params.search = termo.trim();
@@ -52,6 +66,8 @@ export function EmpresasClient() {
       
       const data = await fetchEmpresas(params);
       setEmpresas(data.data);
+      setTotalPages(data.meta.last_page);
+      setTotalResults(data.meta.total);
     } catch (error) {
       console.error("Erro ao carregar empresas:", error);
     } finally {
@@ -133,7 +149,8 @@ export function EmpresasClient() {
           </div>
 
           <p className="mt-6 text-sm text-muted-foreground">
-            {lista.length} {lista.length === 1 ? "empresa encontrada" : "empresas encontradas"}
+            {totalResults} {totalResults === 1 ? "empresa encontrada" : "empresas encontradas"}
+            {totalPages > 1 && ` (página ${currentPage} de ${totalPages})`}
           </p>
 
           {loading ? (
@@ -170,6 +187,32 @@ export function EmpresasClient() {
               <p className="mt-1 text-sm text-muted-foreground">
                 Tente outro termo ou selecione outra categoria.
               </p>
+            </div>
+          )}
+
+          {totalPages > 1 && (
+            <div className="mt-8 flex items-center justify-center gap-2">
+              <button
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="flex items-center gap-1 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-card-foreground transition-colors hover:border-primary hover:text-primary disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft className="size-4" />
+                Anterior
+              </button>
+              
+              <span className="px-4 py-2 text-sm text-muted-foreground">
+                Página {currentPage} de {totalPages}
+              </span>
+              
+              <button
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+                className="flex items-center gap-1 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-card-foreground transition-colors hover:border-primary hover:text-primary disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Próxima
+                <ChevronRight className="size-4" />
+              </button>
             </div>
           )}
 

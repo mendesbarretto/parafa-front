@@ -70,11 +70,13 @@ export interface Cidade {
 
 export interface ApiResponse<T> {
   data: T[];
-  meta?: {
-    current_page?: number;
-    per_page?: number;
-    total?: number;
-    last_page?: number;
+  meta: {
+    current_page: number;
+    per_page: number;
+    total: number;
+    last_page: number;
+    from?: number;
+    to?: number;
   };
 }
 
@@ -84,6 +86,7 @@ export async function fetchEmpresas(params?: {
   city_id?: string;
   state?: string;
   search?: string;
+  page?: number;
 }): Promise<ApiResponse<Empresa>> {
   const queryParams = new URLSearchParams();
   if (params?.per_page) queryParams.append('per_page', params.per_page.toString());
@@ -91,6 +94,7 @@ export async function fetchEmpresas(params?: {
   if (params?.city_id) queryParams.append('city_id', params.city_id);
   if (params?.state) queryParams.append('state', params.state);
   if (params?.search) queryParams.append('search', params.search);
+  if (params?.page) queryParams.append('page', params.page.toString());
 
   const url = `${API_BASE_URL}/empresas${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
   const response = await fetch(url, { headers: DEFAULT_HEADERS });
