@@ -22,6 +22,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { useState, useEffect } from "react";
 import { fetchEmpresas, type Empresa } from "@/lib/api";
+import { EmpresaCard } from "@/components/EmpresaCard";
 
 const categorias = [
   { nome: "Perfumarias", icon: Scissors, total: "3.461", slug: "perfumarias" },
@@ -208,39 +209,7 @@ export function HomeClient() {
                 ))
               ) : (
                 destaques.map((e) => (
-                  <article
-                    key={e.id}
-                    className="flex flex-col rounded-2xl border border-border bg-card p-6 transition-shadow hover:shadow-[var(--shadow-soft)]"
-                  >
-                    <span className="w-fit rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-primary">
-                      {e.category_name || "Sem categoria"}
-                    </span>
-                    <h3 className="mt-4 text-base font-semibold leading-snug text-card-foreground">
-                      {e.name}
-                    </h3>
-                    <p className="mt-2 text-sm text-muted-foreground">{e.description || 'Sem descrição'}</p>
-                    <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
-                      <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-                        <MapPin className="size-4" /> {e.neighborhood} — {e.city}/{e.state}
-                      </span>
-                      <button
-                        onClick={() => {
-                          setLoadingSlug(e.id);
-                          router.push(e.url);
-                        }}
-                        disabled={loadingSlug === e.id}
-                        className="inline-flex items-center gap-1 text-sm font-semibold text-primary disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {loadingSlug === e.id ? (
-                          <Loader2 className="size-3.5 animate-spin" />
-                        ) : (
-                          <>
-                            Ver telefone <ArrowRight className="size-3.5" />
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </article>
+                  <EmpresaCard key={e.id} empresa={e} />
                 ))
               )}
             </div>
@@ -258,7 +227,9 @@ export function HomeClient() {
                 key={estado.nome}
                 onClick={() => {
                   setLoadingSlug(estado.uf);
-                  router.push(`/estados/${estado.uf}`);
+                  // Usar nome do estado no formato slug (ex: bahia ao invés de ba)
+                  const estadoSlug = estado.nome.toLowerCase().replace(/ /g, '-');
+                  router.push(`/${estadoSlug}`);
                 }}
                 disabled={loadingSlug === estado.uf}
                 className="rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-card-foreground transition-colors hover:border-primary hover:text-primary disabled:opacity-50 disabled:cursor-not-allowed"

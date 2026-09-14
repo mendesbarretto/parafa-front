@@ -2,24 +2,34 @@
 
 import Link from "next/link";
 import { useMemo, useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
 import { Search, MapPin, BadgeCheck, ArrowRight, Phone } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { AdSlot } from "@/components/AdSlot";
 import { fetchEmpresas, type Empresa } from "@/lib/api";
-
-// MapPin já está importado acima
+import { EmpresaCard } from "@/components/EmpresaCard";
 
 export function EmpresasClient() {
-  const searchParams = useSearchParams();
-  const [termo, setTermo] = useState(searchParams.get("search") || "");
-  const [location, setLocation] = useState(searchParams.get("location") || "");
+  const [termo, setTermo] = useState("");
+  const [location, setLocation] = useState("");
   const [categoria, setCategoria] = useState("Todas");
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Ler parâmetros da URL ao carregar
+    const params = new URLSearchParams(window.location.search);
+    const searchParam = params.get("search");
+    const locationParam = params.get("location");
+    
+    if (searchParam) setTermo(searchParam);
+    if (locationParam) setLocation(locationParam);
+    
+    loadEmpresas();
+  }, []);
+
+  useEffect(() => {
+    // Recarregar quando os filtros mudam
     loadEmpresas();
   }, [termo, location]);
 
@@ -55,26 +65,14 @@ export function EmpresasClient() {
   );
 
   const lista = useMemo(() => {
-    const t = termo.trim().toLowerCase();
-    const l = location.trim().toLowerCase();
+    // Já filtramos na API, então não precisamos filtrar client-side
+    // Apenas filtrar por categoria se necessário
+    if (categoria === "Todas") return empresas;
     return empresas.filter((e) => {
       const catName = e.category_name || "Sem categoria";
-      const okCat = categoria === "Todas" || catName === categoria;
-      const okTermo =
-        !t ||
-        e.name.toLowerCase().includes(t) ||
-        catName.toLowerCase().includes(t) ||
-        e.neighborhood.toLowerCase().includes(t) ||
-        e.city.toLowerCase().includes(t);
-      
-      const okLocation = !l || 
-        e.city.toLowerCase().includes(l) ||
-        e.state.toLowerCase().includes(l) ||
-        e.neighborhood.toLowerCase().includes(l);
-        
-      return okCat && okTermo && okLocation;
+      return catName === categoria;
     });
-  }, [termo, location, categoria, empresas]);
+  }, [categoria, empresas]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -160,36 +158,7 @@ export function EmpresasClient() {
           ) : (
             <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {lista.map((e) => (
-                <article
-                  key={e.id}
-                  className="flex flex-col rounded-2xl border border-border bg-card p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-[var(--shadow-soft)]"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-primary">
-                      {e.category_name || "Sem categoria"}
-                    </span>
-                    {e.status === "1" && (
-                      <BadgeCheck className="size-4 shrink-0 text-primary" />
-                    )}
-                  </div>
-
-                  <h2 className="mt-4 flex items-start gap-1.5 text-base font-semibold leading-snug text-card-foreground">
-                    {e.name}
-                  </h2>
-                  <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{e.description || 'Sem descrição'}</p>
-
-                  <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
-                    <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-                      <MapPin className="size-4" /> {e.neighborhood} — {e.city}/{e.state}
-                    </span>
-                    <Link
-                      href={e.url}
-                      className="inline-flex items-center gap-1 text-sm font-semibold text-primary"
-                    >
-                      Ver <ArrowRight className="size-3.5" />
-                    </Link>
-                  </div>
-                </article>
+                <EmpresaCard key={e.id} empresa={e} />
               ))}
             </div>
           )}
