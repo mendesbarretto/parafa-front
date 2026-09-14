@@ -23,7 +23,7 @@ services:
 
   backend:
     build:
-      context: ../parafa.4.0-backend
+      context: ../parafa-backend
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
@@ -39,7 +39,7 @@ services:
       - db
     restart: unless-stopped
     volumes:
-      - ../parafa.4.0-backend:/var/www/html
+      - ../parafa-backend:/var/www/html
       - ./logs:/var/log/laravel
 
   db:

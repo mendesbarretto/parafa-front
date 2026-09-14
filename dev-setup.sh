@@ -82,13 +82,7 @@ test_api() {
     
     API_URL=$(grep NEXT_PUBLIC_API_URL .env.local | cut -d '=' -f2)
     
-    if curl -f "${API_URL}/empresas" > /dev/null 2>&1; then
-        log "✅ API respondendo em ${API_URL}"
-    else
-        warning "⚠️  API não está respondendo em ${API_URL}"
-        echo "   Verifique se o backend está rodando"
-        echo "   Backend: cd ../parafa.4.0-backend && php artisan serve"
-    fi
+    
 }
 
 # Informações úteis

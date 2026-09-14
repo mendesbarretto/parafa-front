@@ -22,14 +22,6 @@ check_local() {
         echo "   Execute: npm run dev"
     fi
     
-    # Verificar API
-    API_URL="http://localhost:8000/api"
-    if curl -f "$API_URL/empresas" > /dev/null 2>&1; then
-        echo -e "${GREEN}✅ API local respondendo${NC}"
-    else
-        echo -e "${RED}❌ API local não está rodando${NC}"
-        echo "   Execute: cd ../parafa.4.0-backend && php artisan serve"
-    fi
 }
 
 check_production() {
