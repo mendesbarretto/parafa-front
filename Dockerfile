@@ -1,28 +1,31 @@
-# Dockerfile para produção do Parafa Frontend
-FROM node:20-alpine AS builder
+# =================================================================
+# Multi-stage Dockerfile para produção do Parafa Frontend
+# =================================================================
+
+# Estágio 1: Dependências
+FROM node:20-alpine AS deps
+RUN apk add --no-cache libc6-compat
 
 WORKDIR /app
 
-# Configurar limites de memória do Node
-ENV NODE_OPTIONS="--max-old-space-size=1024"
-ENV NEXT_TELEMETRY_DISABLED=1
-
 # Copiar arquivos de dependências
-COPY package*.json ./
+COPY package.json package-lock.json* ./
+RUN npm ci --only=production
 
-# Instalar dependências de produção E desenvolvimento (precisa para build)
-RUN npm ci
+# Estágio 2: Build
+FROM node:20-alpine AS builder
+WORKDIR /app
 
-# Copiar código fonte
+# Copiar dependências do estágio anterior
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Build da aplicação com configurações otimizadas
-ENV NODE_ENV=production
+# Build da aplicação
+ENV NEXT_TELEMETRY_DISABLED 1
 RUN npm run build
 
-# Imagem final
+# Estágio 3: Runtime
 FROM node:20-alpine AS runner
-
 WORKDIR /app
 
 # Criar usuário não-root
@@ -39,9 +42,9 @@ USER nextjs
 
 # Expor porta
 EXPOSE 3000
-ENV PORT=3000
-ENV NODE_ENV=production
-ENV HOSTNAME="0.0.0.0"
+ENV PORT 3000
+ENV NODE_ENV production
+ENV NEXT_TELEMETRY_DISABLED 1
 
 # Comando de inicialização
 CMD ["node", "server.js"]

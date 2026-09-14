@@ -12,11 +12,11 @@ fi
 
 # Parar containers
 echo "⏸️  Parando aplicação..."
-docker-compose -f docker-compose.prod.yml down 2>/dev/null || true
+docker-compose down 2>/dev/null || true
 
 # Build e subir
 echo "🚀 Build e deploy..."
-docker-compose -f docker-compose.prod.yml up -d --build
+docker-compose up -d --build
 
 # Aguardar
 echo "⏳ Aguardando..."
