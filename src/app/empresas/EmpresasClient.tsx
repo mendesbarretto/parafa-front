@@ -1,94 +1,88 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState, useEffect } from "react";
-import { Search, MapPin, BadgeCheck, ArrowRight, Phone, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, MapPin, Phone, ChevronLeft, ChevronRight } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { AdSlot } from "@/components/AdSlot";
-import { fetchEmpresas, type Empresa } from "@/lib/api";
+import { fetchCategorias, fetchEmpresas, type Categoria, type Empresa } from "@/lib/api";
 import { EmpresaCard } from "@/components/EmpresaCard";
 
 export function EmpresasClient() {
-  const [termo, setTermo] = useState("");
-  const [location, setLocation] = useState("");
+  const [termo, setTermo] = useState(() =>
+    typeof window === "undefined" ? "" : new URLSearchParams(window.location.search).get("search") || "",
+  );
+  const [location, setLocation] = useState(() =>
+    typeof window === "undefined" ? "" : new URLSearchParams(window.location.search).get("location") || "",
+  );
   const [categoria, setCategoria] = useState("Todas");
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(() => {
+    if (typeof window === "undefined") return 1;
+    const page = Number.parseInt(new URLSearchParams(window.location.search).get("page") || "1", 10);
+    return Number.isFinite(page) && page > 0 ? page : 1;
+  });
   const [totalPages, setTotalPages] = useState(1);
   const [totalResults, setTotalResults] = useState(0);
+  const [categoriasDisponiveis, setCategoriasDisponiveis] = useState<Categoria[]>([]);
 
   useEffect(() => {
-    // Ler parâmetros da URL ao carregar
-    const params = new URLSearchParams(window.location.search);
-    const searchParam = params.get("search");
-    const locationParam = params.get("location");
-    const pageParam = params.get("page");
-    
-    if (searchParam) setTermo(searchParam);
-    if (locationParam) setLocation(locationParam);
-    if (pageParam) setCurrentPage(parseInt(pageParam, 10));
-    
-    loadEmpresas();
+    fetchCategorias()
+      .then((response) => setCategoriasDisponiveis(response.data))
+      .catch((error) => console.error("Erro ao carregar categorias:", error));
   }, []);
 
   useEffect(() => {
-    // Recarregar quando os filtros mudam
-    setCurrentPage(1); // Resetar para página 1 quando mudar filtros
-    loadEmpresas();
-  }, [termo, location]);
+    const timer = window.setTimeout(async () => {
+      try {
+        setLoading(true);
+        const params: {
+          per_page?: number;
+          search?: string;
+          state?: string;
+          category_id?: number;
+          page?: number;
+        } = {
+          per_page: 20,
+          page: currentPage,
+        };
 
-  useEffect(() => {
-    // Recarregar quando mudar de página
-    loadEmpresas();
-  }, [currentPage]);
+        if (termo.trim()) params.search = termo.trim();
 
-  const loadEmpresas = async () => {
-    try {
-      setLoading(true);
-      const params: { per_page?: number; search?: string; state?: string; page?: number } = { 
-        per_page: 20,
-        page: currentPage
-      };
-      
-      if (termo.trim()) {
-        params.search = termo.trim();
-      }
-      
-      if (location.trim()) {
-        // Verificar se é um estado (2 letras)
         const uf = location.trim().toUpperCase();
-        if (uf.length === 2) {
-          params.state = uf;
+        if (uf.length === 2) params.state = uf;
+
+        if (categoria !== "Todas") {
+          const selected = categoriasDisponiveis.find(
+            (item) => item.name === categoria,
+          );
+          if (selected) params.category_id = selected.id;
         }
+
+        const data = await fetchEmpresas(params);
+        setEmpresas(data.data);
+        setTotalPages(data.meta.last_page);
+        setTotalResults(data.meta.total);
+      } catch (error) {
+        console.error("Erro ao carregar empresas:", error);
+        setEmpresas([]);
+        setTotalPages(1);
+        setTotalResults(0);
+      } finally {
+        setLoading(false);
       }
-      
-      const data = await fetchEmpresas(params);
-      setEmpresas(data.data);
-      setTotalPages(data.meta.last_page);
-      setTotalResults(data.meta.total);
-    } catch (error) {
-      console.error("Erro ao carregar empresas:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    }, 250);
+
+    return () => window.clearTimeout(timer);
+  }, [categoria, categoriasDisponiveis, currentPage, location, termo]);
 
   const categorias = useMemo(
-    () => ["Todas", ...Array.from(new Set(empresas.map((e) => e.category_name || "Sem categoria")))],
-    [empresas],
+    () => ["Todas", ...categoriasDisponiveis.map((item) => item.name)],
+    [categoriasDisponiveis],
   );
 
-  const lista = useMemo(() => {
-    // Já filtramos na API, então não precisamos filtrar client-side
-    // Apenas filtrar por categoria se necessário
-    if (categoria === "Todas") return empresas;
-    return empresas.filter((e) => {
-      const catName = e.category_name || "Sem categoria";
-      return catName === categoria;
-    });
-  }, [categoria, empresas]);
+  const lista = useMemo(() => empresas, [empresas]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -112,7 +106,10 @@ export function EmpresasClient() {
                 <Search className="size-4 shrink-0 text-muted-foreground" />
                 <input
                   value={termo}
-                  onChange={(ev) => setTermo(ev.target.value)}
+                  onChange={(ev) => {
+                    setTermo(ev.target.value);
+                    setCurrentPage(1);
+                  }}
                   className="w-full bg-transparent text-sm text-card-foreground outline-none placeholder:text-muted-foreground"
                   placeholder="Buscar por nome, categoria ou bairro"
                 />
@@ -122,7 +119,10 @@ export function EmpresasClient() {
                 <MapPin className="size-4 shrink-0 text-muted-foreground" />
                 <input
                   value={location}
-                  onChange={(ev) => setLocation(ev.target.value)}
+                  onChange={(ev) => {
+                    setLocation(ev.target.value);
+                    setCurrentPage(1);
+                  }}
                   className="w-full bg-transparent text-sm text-card-foreground outline-none placeholder:text-muted-foreground"
                   placeholder="Cidade ou estado"
                 />
@@ -136,7 +136,10 @@ export function EmpresasClient() {
             {categorias.map((c) => (
               <button
                 key={c}
-                onClick={() => setCategoria(c)}
+                onClick={() => {
+                  setCategoria(c);
+                  setCurrentPage(1);
+                }}
                 className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
                   categoria === c
                     ? "border-primary bg-primary text-primary-foreground"
