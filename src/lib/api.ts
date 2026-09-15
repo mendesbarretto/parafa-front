@@ -56,6 +56,8 @@ export interface Categoria {
   url: string;
   department_id: number;
   customers_count: number;
+  department_name?: string;
+  department_url?: string;
 }
 
 export interface Cidade {
