@@ -12,7 +12,7 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 
 # Instalar dependências (incluindo dev para tailwindcss)
-ENV NODE_OPTIONS="--max-old-space-size=512"
+ENV NODE_OPTIONS="--max-old-space-size=192"
 RUN npm ci --silent --prefer-offline --no-audit --no-fund
 
 # Copiar código
@@ -20,7 +20,7 @@ COPY . .
 
 # Build com otimizações
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV NODE_OPTIONS="--max-old-space-size=256"
+ENV NODE_OPTIONS="--max-old-space-size=192"
 RUN npm run build --silent
 
 # Criar usuário não-root
