@@ -10,13 +10,13 @@ if [ -d ".git" ]; then
     git pull
 fi
 
-# Parar container atual
-echo "⏸️  Parando container atual..."
-docker-compose down 2>/dev/null || true
+# Construir a imagem mantendo o container atual disponível
+echo "🚀 Construindo nova imagem..."
+docker-compose build frontend
 
-# Build e subir novo container
-echo "🚀 Build e deploy..."
-docker-compose up -d --build
+# Subir o novo container somente após o build concluir
+echo "▶️  Subindo nova versão..."
+docker-compose up -d --no-build frontend
 
 # Aguardar início
 echo "⏳ Aguardando aplicação iniciar..."
