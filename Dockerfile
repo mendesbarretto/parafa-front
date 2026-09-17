@@ -1,5 +1,5 @@
 # =================================================================
-# Multi-stage Dockerfile para produção do Parafa Frontend
+# Multi-stage Dockerfile otimizado para produção do Parafa Frontend
 # =================================================================
 
 # Estágio 1: Dependências
@@ -10,7 +10,7 @@ WORKDIR /app
 
 # Copiar arquivos de dependências
 COPY package.json package-lock.json* ./
-RUN npm ci --only=production
+RUN npm ci --only=production --silent --prefer-offline
 
 # Estágio 2: Build
 FROM node:20-alpine AS builder
@@ -20,9 +20,10 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Build da aplicação
+# Build da aplicação com otimizações
 ENV NEXT_TELEMETRY_DISABLED 1
-RUN npm run build
+ENV NODE_OPTIONS="--max-old-space-size=512"
+RUN npm run build --silent
 
 # Estágio 3: Runtime
 FROM node:20-alpine AS runner
@@ -45,6 +46,7 @@ EXPOSE 3000
 ENV PORT 3000
 ENV NODE_ENV production
 ENV NEXT_TELEMETRY_DISABLED 1
+ENV NODE_OPTIONS="--max-old-space-size=256"
 
 # Comando de inicialização
 CMD ["node", "server.js"]

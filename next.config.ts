@@ -10,6 +10,8 @@ const nextConfig: NextConfig = {
   experimental: {
     // Reduzir uso de memória durante o build
     memoryBasedWorkersCount: true,
+    // Otimizações adicionais
+    optimizePackageImports: ['lucide-react'],
   },
   images: {
     // Migrar de domains para remotePatterns (fix do warning)
