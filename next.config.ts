@@ -8,8 +8,8 @@ const nextConfig: NextConfig = {
     removeConsole: process.env.NODE_ENV === "production",
   },
   experimental: {
-    // A VM de produção tem 2 CPUs e pouca memória disponível.
-    cpus: 1,
+    // Ajusta a quantidade de workers conforme a memória disponível.
+    memoryBasedWorkersCount: true,
     // Otimizações agressivas de pacotes
     optimizePackageImports: ['lucide-react'],
   },
