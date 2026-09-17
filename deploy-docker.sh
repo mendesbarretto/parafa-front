@@ -14,6 +14,11 @@ fi
 echo "🚀 Construindo nova imagem..."
 docker-compose build frontend
 
+# Remover o container legado que usa a porta 3000
+echo "⏹️  Removendo container anterior..."
+docker stop parafa-frontend 2>/dev/null || true
+docker rm parafa-frontend 2>/dev/null || true
+
 # Subir o novo container somente após o build concluir
 echo "▶️  Subindo nova versão..."
 docker-compose up -d --no-build frontend
