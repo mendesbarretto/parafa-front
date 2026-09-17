@@ -2,38 +2,18 @@
 
 set -e
 
-echo "🐳 Deploy Parafa Frontend"
+echo "🐳 Atualizando Parafa Frontend"
 
-# Git pull
-echo "📥 Atualizando código..."
-if [ -d ".git" ]; then
-    git pull
-fi
+: "${FRONTEND_IMAGE:?Defina FRONTEND_IMAGE com o nome da imagem pronta}"
 
-# Construir a imagem mantendo o container atual disponível
-echo "🚀 Construindo nova imagem..."
-docker-compose build frontend
+echo "📦 Baixando imagem..."
+docker pull "$FRONTEND_IMAGE"
+docker tag "$FRONTEND_IMAGE" parafa-frontend:latest
 
-# Remover o container legado que usa a porta 3000
-echo "⏹️  Removendo container anterior..."
-docker stop parafa-frontend 2>/dev/null || true
-docker rm parafa-frontend 2>/dev/null || true
+docker rm -f parafa-frontend 2>/dev/null || true
 
-# Subir o novo container somente após o build concluir
-echo "▶️  Subindo nova versão..."
+echo "▶️  Iniciando frontend..."
 docker-compose up -d --no-build frontend
 
-# Aguardar início
-echo "⏳ Aguardando aplicação iniciar..."
-sleep 15
-
-# Verificar health
-echo "🔍 Verificando saúde da aplicação..."
-if curl -f http://localhost:3000/api/health > /dev/null 2>&1; then
-    echo "✅ Deploy OK!"
-    echo "🌐 http://localhost:3000"
-else
-    echo "❌ Erro no deploy - health check falhou"
-    docker-compose logs frontend --tail 20
-    exit 1
-fi
+curl --fail --retry 10 --retry-delay 2 http://localhost:3000/api/health
+echo "✅ Deploy OK: http://localhost:3000"
