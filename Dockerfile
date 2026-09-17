@@ -1,52 +1,51 @@
 # =================================================================
-# Multi-stage Dockerfile otimizado para produção do Parafa Frontend
+# Dockerfile otimizado para baixa memória do Parafa Frontend
 # =================================================================
 
-# Estágio 1: Dependências
-FROM node:20-alpine AS deps
+# Usar alpine mais leve
+FROM node:20-alpine AS builder
+
 RUN apk add --no-cache libc6-compat
 
 WORKDIR /app
 
-# Copiar arquivos de dependências
+# Copiar e instalar dependências
 COPY package.json package-lock.json* ./
-RUN npm ci --only=production --silent --prefer-offline
+ENV NODE_OPTIONS="--max-old-space-size=512"
+RUN npm ci --only=production --silent --prefer-offline --no-audit --no-fund
 
-# Estágio 2: Build
-FROM node:20-alpine AS builder
-WORKDIR /app
-
-# Copiar dependências do estágio anterior
-COPY --from=deps /app/node_modules ./node_modules
+# Copiar código
 COPY . .
 
-# Build da aplicação com otimizações
+# Build com limites de memória
 ENV NEXT_TELEMETRY_DISABLED 1
 ENV NODE_OPTIONS="--max-old-space-size=512"
 RUN npm run build --silent
 
-# Estágio 3: Runtime
+# Imagem final minimalista
 FROM node:20-alpine AS runner
+
+RUN apk add --no-cache libc6-compat
+
 WORKDIR /app
 
 # Criar usuário não-root
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copiar arquivos necessários
+# Copiar apenas o necessário
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./package.json
 
-# Configurar usuário
 USER nextjs
 
-# Expor porta
 EXPOSE 3000
 ENV PORT 3000
 ENV NODE_ENV production
 ENV NEXT_TELEMETRY_DISABLED 1
-ENV NODE_OPTIONS="--max-old-space-size=256"
+ENV NODE_OPTIONS="--max-old-space-size=192"
 
-# Comando de inicialização
 CMD ["node", "server.js"]
