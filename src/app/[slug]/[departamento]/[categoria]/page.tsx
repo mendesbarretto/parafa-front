@@ -3,8 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { AdSlot } from "@/components/AdSlot";
-import { fetchEmpresas, fetchCategorias } from "@/lib/api";
-import { notFound } from "next/navigation";
+import { fetchEmpresas, fetchCategoria } from "@/lib/api";
 import type { Metadata } from "next";
 
 interface PageProps {
@@ -48,12 +47,7 @@ export default async function SlugDepartamentoCategoriaPage({ params }: PageProp
     const cidade = parts.slice(0, -1).join('-');
     
     // Buscar categoria pelo slug
-    const categoriasData = await fetchCategorias();
-    const categoriaEncontrada = categoriasData.data.find(c => c.url === categoria);
-    
-    if (!categoriaEncontrada) {
-      notFound();
-    }
+    const categoriaEncontrada = await fetchCategoria(categoria);
     
     // Buscar empresas desta cidade e categoria
     const empresasData = await fetchEmpresas({ category_id: categoriaEncontrada.id, per_page: 50 });

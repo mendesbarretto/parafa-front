@@ -3,9 +3,8 @@ import { MapPin, Star, BadgeCheck, ArrowRight, ChevronRight } from "lucide-react
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { AdSlot } from "@/components/AdSlot";
-import { fetchEmpresas, fetchCategorias } from "@/lib/api";
+import { fetchEmpresas, fetchCategoria } from "@/lib/api";
 import { EmpresaCard } from "@/components/EmpresaCard";
-import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
 interface PageProps {
@@ -19,17 +18,7 @@ export const dynamic = 'force-dynamic';
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   try {
     const { slug } = await params;
-    const categoriasData = await fetchCategorias();
-    const categoria = categoriasData.data.find(c => c.url === slug);
-    
-    if (!categoria) {
-      return {
-        title: "Categoria não encontrada | Parafa",
-        robots: {
-          index: false,
-        },
-      };
-    }
+    const categoria = await fetchCategoria(slug);
 
     return {
       title: `${categoria.name} | Parafa`,
@@ -49,12 +38,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function CategoriaDetalhePage({ params }: PageProps) {
   try {
     const { slug } = await params;
-    const categoriasData = await fetchCategorias();
-    const categoria = categoriasData.data.find(c => c.url === slug);
-    
-    if (!categoria) {
-      notFound();
-    }
+    const categoria = await fetchCategoria(slug);
 
     const empresasData = await fetchEmpresas({ category_id: categoria.id, per_page: 20 });
 

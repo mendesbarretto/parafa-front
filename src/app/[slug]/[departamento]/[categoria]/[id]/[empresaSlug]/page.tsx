@@ -50,7 +50,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function EmpresaDetailPage({ params }: PageProps) {
   try {
-    const { id } = await params;
+    const { slug, departamento, categoria, id } = await params;
     const empresa = await fetchEmpresa(id);
     
     if (!empresa) {
@@ -72,8 +72,16 @@ export default async function EmpresaDetailPage({ params }: PageProps) {
                   Início
                 </Link>
                 <ChevronRight className="size-3.5" />
-                <Link href={`/${empresa.url.split('/').slice(0, 2).join('/')}`} className="transition-colors hover:text-primary-foreground">
-                  {empresa.city}/{empresa.state}
+                <Link href={`/${slug}`} className="transition-colors hover:text-primary-foreground">
+                  {empresa.city}, {empresa.state}
+                </Link>
+                <ChevronRight className="size-3.5" />
+                <Link href={`/${slug}/${departamento}`} className="transition-colors hover:text-primary-foreground">
+                  {empresa.department_name || departamento.replace(/-/g, ' ')}
+                </Link>
+                <ChevronRight className="size-3.5" />
+                <Link href={`/${slug}/${departamento}/${categoria}`} className="transition-colors hover:text-primary-foreground">
+                  {empresa.category_name || categoria.replace(/-/g, ' ')}
                 </Link>
                 <ChevronRight className="size-3.5" />
                 <span className="font-medium text-primary-foreground">{empresa.name}</span>

@@ -9,7 +9,6 @@ interface EmpresaCardProps {
 export function EmpresaCard({ empresa }: EmpresaCardProps) {
   const categoryDisplay = empresa.category_name || "Comércio e Serviços";
   const mainPhone = empresa.phone;
-  const phoneTel = empresa.phone_tel || (mainPhone ? mainPhone.replace(/\D/g, "") : null);
   const whatsappUrl = empresa.whatsapp_url;
   const addressDisplay = empresa.neighborhood 
     ? `${empresa.neighborhood} — ${empresa.city}/${empresa.state}`
@@ -44,14 +43,14 @@ export function EmpresaCard({ empresa }: EmpresaCardProps) {
       {/* Bloco de telefones / contatos da v3 */}
       <div className="mt-4 pt-3 border-t border-border/60 flex flex-wrap items-center justify-between gap-2">
         {mainPhone ? (
-          <a
-            href={`tel:${phoneTel}`}
+          <Link
+            href={empresa.url}
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground hover:text-primary transition-colors"
-            title="Ligar para a empresa"
+            title="Ver telefone da empresa"
           >
             <Phone className="size-3.5 text-primary" />
-            <span>{mainPhone}</span>
-          </a>
+            <span>Ver telefone</span>
+          </Link>
         ) : (
           <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
             <Phone className="size-3.5 opacity-50" />

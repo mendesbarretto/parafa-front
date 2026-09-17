@@ -3,8 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { AdSlot } from "@/components/AdSlot";
-import { fetchEmpresas, fetchCategorias } from "@/lib/api";
-import { notFound } from "next/navigation";
+import { fetchEmpresas } from "@/lib/api";
 import type { Metadata } from "next";
 
 interface PageProps {
@@ -47,14 +46,11 @@ export default async function SlugDepartamentoPage({ params }: PageProps) {
     const cidade = parts.slice(0, -1).join('-');
     
     // Buscar empresas desta cidade e departamento
-    const categoriasData = await fetchCategorias();
-    const departamentoId = categoriasData.data.find(c => c.url === departamento)?.department_id;
-    
     const empresasData = await fetchEmpresas({ per_page: 50 });
     const empresasFiltradas = empresasData.data.filter(e => 
       e.city.toLowerCase() === cidade.toLowerCase() && 
       e.state.toUpperCase() === uf.toUpperCase() &&
-      e.category_id === departamentoId
+      e.department_url === departamento
     );
 
     return (
