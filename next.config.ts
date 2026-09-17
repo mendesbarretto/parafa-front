@@ -3,25 +3,25 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: "standalone",
   compress: true,
-  generateEtags: true,
+  generateEtags: false, // Desabilitar para reduzir build time
   compiler: {
     removeConsole: process.env.NODE_ENV === "production",
   },
   experimental: {
     // Reduzir uso de memória durante o build
     memoryBasedWorkersCount: true,
-    // Otimizações adicionais
+    // Otimizações agressivas de pacotes
     optimizePackageImports: ['lucide-react'],
   },
   images: {
-    // Migrar de domains para remotePatterns (fix do warning)
     remotePatterns: [
       {
         protocol: "https",
         hostname: "parafa.com.br",
       },
     ],
-    formats: ["image/avif", "image/webp"],
+    // Reduzir formato de imagem para build mais rápido
+    formats: ["image/webp"],
     minimumCacheTTL: 60,
   },
   headers: async () => {
