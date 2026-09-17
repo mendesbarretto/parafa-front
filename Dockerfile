@@ -11,16 +11,16 @@ WORKDIR /app
 # Copiar tudo de uma vez para reduzir layers
 COPY package.json package-lock.json* ./
 
-# Instalar dependências com otimizações extremas
+# Instalar dependências (incluindo dev para tailwindcss)
 ENV NODE_OPTIONS="--max-old-space-size=512"
-RUN npm ci --only=production --silent --prefer-offline --no-audit --no-fund --ignore-scripts
+RUN npm ci --silent --prefer-offline --no-audit --no-fund
 
 # Copiar código
 COPY . .
 
 # Build com otimizações
-ENV NEXT_TELEMETRY_DISABLED 1
-ENV NODE_OPTIONS="--max-old-space-size=384"
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_OPTIONS="--max-old-space-size=256"
 RUN npm run build --silent
 
 # Criar usuário não-root
@@ -34,9 +34,9 @@ RUN chown -R nextjs:nodejs /app/public
 USER nextjs
 
 EXPOSE 3000
-ENV PORT 3000
-ENV NODE_ENV production
-ENV NEXT_TELEMETRY_DISABLED 1
+ENV PORT=3000
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_OPTIONS="--max-old-space-size=128"
 
 CMD ["node", "server.js"]
