@@ -191,9 +191,21 @@ curl -I https://parafa.com.br
 
 ## 🐳 Deploy com Docker (Alternativo)
 
+O deploy Docker faz o build localmente e envia apenas a imagem comprimida para o servidor. Assim, o servidor não precisa compilar o Next.js nem consumir memória extra durante o build.
+
+```bash
+# No computador local, dentro de parafa-nextjs/
+chmod +x deploy-docker.sh
+./deploy-docker.sh
+```
+
+Variáveis opcionais: `SERVER_USER` (padrão `root`), `SERVER_PATH` (padrão `/home/parafa-front`), `IMAGE_NAME` e `IMAGE_TAG`. O servidor precisa ter Docker, Compose e `curl` instalados, além de acesso SSH configurado.
+
+Para testar somente localmente:
+
 ```bash
 # Build da imagem
-docker build -f Dockerfile.prod -t parafa-frontend .
+docker build -t parafa-frontend .
 
 # Executar
 docker run -d --name parafa-frontend -p 3000:3000 parafa-frontend
