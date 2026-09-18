@@ -50,11 +50,14 @@ export default async function SlugDepartamentoCategoriaPage({ params }: PageProp
     const categoriaEncontrada = await fetchCategoria(categoria);
     
     // Buscar empresas desta cidade e categoria
-    const empresasData = await fetchEmpresas({ category_id: categoriaEncontrada.id, per_page: 50 });
-    const empresasFiltradas = empresasData.data.filter(e => 
-      e.city.toLowerCase() === cidade.toLowerCase() && 
-      e.state.toUpperCase() === uf.toUpperCase()
-    );
+    const empresasData = await fetchEmpresas({
+      category_id: categoriaEncontrada.id,
+      city: cidade.replace(/-/g, ' '),
+      state: uf,
+      include_inactive: true,
+      per_page: 50,
+    });
+    const empresasFiltradas = empresasData.data;
 
     return (
       <div className="min-h-screen bg-background">

@@ -127,7 +127,7 @@ export default async function SlugPage({ params }: PageProps) {
     const uf = estadoNomeParaUF[slugLower];
     if (uf) {
       const estadoNomeFormatado = ufParaNome[uf];
-      const empresasData = await fetchEmpresas({ state: uf, per_page: 20 });
+      const empresasData = await fetchEmpresas({ state: uf, include_inactive: true, per_page: 20 });
       const cidades = await fetchCidades(uf);
 
       return (
@@ -244,11 +244,13 @@ export default async function SlugPage({ params }: PageProps) {
       const cidade = parts.slice(0, -1).join('-');
       
       // Buscar empresas desta cidade
-      const empresasData = await fetchEmpresas({ per_page: 20 });
-      const empresasCidade = empresasData.data.filter(e => 
-        e.city.toLowerCase() === cidade.toLowerCase() && 
-        e.state.toUpperCase() === uf.toUpperCase()
-      );
+      const empresasData = await fetchEmpresas({
+        city: cidade.replace(/-/g, ' '),
+        state: uf,
+        include_inactive: true,
+        per_page: 50,
+      });
+      const empresasCidade = empresasData.data;
 
       return (
         <div className="min-h-screen bg-background">

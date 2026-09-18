@@ -46,12 +46,14 @@ export default async function SlugDepartamentoPage({ params }: PageProps) {
     const cidade = parts.slice(0, -1).join('-');
     
     // Buscar empresas desta cidade e departamento
-    const empresasData = await fetchEmpresas({ per_page: 50 });
-    const empresasFiltradas = empresasData.data.filter(e => 
-      e.city.toLowerCase() === cidade.toLowerCase() && 
-      e.state.toUpperCase() === uf.toUpperCase() &&
-      e.department_url === departamento
-    );
+    const empresasData = await fetchEmpresas({
+      city: cidade.replace(/-/g, ' '),
+      state: uf,
+      department_url: departamento,
+      include_inactive: true,
+      per_page: 50,
+    });
+    const empresasFiltradas = empresasData.data;
 
     return (
       <div className="min-h-screen bg-background">

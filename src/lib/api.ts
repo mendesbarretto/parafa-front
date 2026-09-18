@@ -86,7 +86,10 @@ export async function fetchEmpresas(params?: {
   per_page?: number;
   category_id?: number;
   city_id?: string;
+  city?: string;
   state?: string;
+  department_url?: string;
+  include_inactive?: boolean;
   search?: string;
   page?: number;
 }): Promise<ApiResponse<Empresa>> {
@@ -94,7 +97,10 @@ export async function fetchEmpresas(params?: {
   if (params?.per_page) queryParams.append('per_page', params.per_page.toString());
   if (params?.category_id) queryParams.append('category_id', params.category_id.toString());
   if (params?.city_id) queryParams.append('city_id', params.city_id);
+  if (params?.city) queryParams.append('city', params.city);
   if (params?.state) queryParams.append('state', params.state);
+  if (params?.department_url) queryParams.append('department_url', params.department_url);
+  if (params?.include_inactive) queryParams.append('include_inactive', '1');
   if (params?.search) queryParams.append('search', params.search);
   if (params?.page) queryParams.append('page', params.page.toString());
 
