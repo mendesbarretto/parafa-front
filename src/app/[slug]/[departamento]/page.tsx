@@ -3,6 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { AdSlot } from "@/components/AdSlot";
+import { EmpresaCard } from "@/components/EmpresaCard";
 import { fetchEmpresas } from "@/lib/api";
 import type { Metadata } from "next";
 
@@ -47,7 +48,7 @@ export default async function SlugDepartamentoPage({ params }: PageProps) {
     
     // Buscar empresas desta cidade e departamento
     const empresasData = await fetchEmpresas({
-      city: cidade.replace(/-/g, ' '),
+      city_url: cidade,
       state: uf,
       department_url: departamento,
       include_inactive: true,
@@ -88,33 +89,7 @@ export default async function SlugDepartamentoPage({ params }: PageProps) {
           <div className="mx-auto max-w-6xl px-5 py-12">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {empresasFiltradas.map((empresa) => (
-                <article
-                  key={empresa.id}
-                  className="flex flex-col rounded-2xl border border-border bg-card p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-[var(--shadow-soft)]"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-primary">
-                      {empresa.category_name || "Categoria"}
-                    </span>
-                  </div>
-
-                  <h2 className="mt-4 flex items-start gap-1.5 text-base font-semibold leading-snug text-card-foreground">
-                    {empresa.name}
-                  </h2>
-                  <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{empresa.description || 'Sem descrição'}</p>
-
-                  <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
-                    <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-                      <span className="grid size-4 place-items-center text-xs">📍</span> {empresa.neighborhood}
-                    </span>
-                    <Link
-                      href={empresa.url}
-                      className="inline-flex items-center gap-1 text-sm font-semibold text-primary"
-                    >
-                      Ver <ArrowRight className="size-3.5" />
-                    </Link>
-                  </div>
-                </article>
+                <EmpresaCard key={empresa.id} empresa={empresa} />
               ))}
             </div>
 

@@ -87,6 +87,7 @@ export async function fetchEmpresas(params?: {
   category_id?: number;
   city_id?: string;
   city?: string;
+  city_url?: string;
   state?: string;
   department_url?: string;
   include_inactive?: boolean;
@@ -98,6 +99,7 @@ export async function fetchEmpresas(params?: {
   if (params?.category_id) queryParams.append('category_id', params.category_id.toString());
   if (params?.city_id) queryParams.append('city_id', params.city_id);
   if (params?.city) queryParams.append('city', params.city);
+  if (params?.city_url) queryParams.append('city_url', params.city_url);
   if (params?.state) queryParams.append('state', params.state);
   if (params?.department_url) queryParams.append('department_url', params.department_url);
   if (params?.include_inactive) queryParams.append('include_inactive', '1');
