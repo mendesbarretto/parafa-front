@@ -2,6 +2,7 @@ import { BuscaClient } from "./BuscaClient";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/busca' },
   title: "Busca | Parafa",
   description: "Busque empresas, serviços e produtos em todo o Brasil.",
   openGraph: {

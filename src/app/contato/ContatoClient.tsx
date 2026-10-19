@@ -1,219 +1,110 @@
 "use client";
 
-import { useState } from "react";
-import { Mail, Phone, MapPin, Send, CheckCircle } from "lucide-react";
+import { FormEvent, useState } from "react";
+import { CheckCircle, Mail, Send } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 
-export function ContatoClient() {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    subject: "",
-    message: "",
-  });
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState("");
+const inputClass = "mt-1 w-full rounded-lg border border-border bg-background px-4 py-3 text-card-foreground outline-none focus:border-primary";
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+export function ContatoClient() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [protocol, setProtocol] = useState("");
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     setLoading(true);
     setError("");
+    const form = event.currentTarget;
+    const values = new FormData(form);
 
     try {
-      // Aqui você implementaria a chamada API real
-      // Por enquanto, simula sucesso
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setSuccess(true);
-      setFormData({ name: "", email: "", subject: "", message: "" });
-    } catch (err) {
-      setError("Erro ao enviar mensagem. Tente novamente.");
+      const response = await fetch("/api/contato", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: values.get("name"),
+          email: values.get("email"),
+          phone: values.get("phone"),
+          company: values.get("company"),
+          message: values.get("message"),
+          website: values.get("website"),
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || "Não foi possível enviar a mensagem.");
+      setProtocol(result.protocol);
+      form.reset();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Não foi possível enviar a mensagem.");
     } finally {
       setLoading(false);
     }
-  };
-
-  if (success) {
-    return (
-      <div className="min-h-screen bg-background">
-        <SiteHeader />
-        <main className="mx-auto max-w-6xl px-5 py-20">
-          <div className="mx-auto max-w-md text-center">
-            <div className="mx-auto mb-6 flex size-16 items-center justify-center rounded-full bg-green-100">
-              <CheckCircle className="size-8 text-green-600" />
-            </div>
-            <h1 className="text-2xl font-bold text-card-foreground">Mensagem enviada!</h1>
-            <p className="mt-4 text-muted-foreground">
-              Obrigado pelo contato. Responderemos em breve.
-            </p>
-            <button
-              onClick={() => setSuccess(false)}
-              className="mt-8 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-            >
-              Enviar outra mensagem
-            </button>
-          </div>
-        </main>
-        <SiteFooter />
-      </div>
-    );
   }
 
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
-
       <main>
         <section className="hero-surface">
           <div className="mx-auto max-w-6xl px-5 py-14 md:py-16">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary-foreground/70">
-              contato
-            </p>
-            <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-primary-foreground md:text-5xl">
-              Entre em contato
-            </h1>
-            <p className="mt-4 max-w-xl text-primary-foreground/80">
-              Dúvidas, sugestões ou parcerias? Estamos aqui para ajudar.
-            </p>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary-foreground/70">contato</p>
+            <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-primary-foreground md:text-5xl">Entre em contato</h1>
+            <p className="mt-4 max-w-xl text-primary-foreground/80">Dúvidas, sugestões ou correções de informações? Envie sua mensagem.</p>
           </div>
         </section>
 
-        <div className="mx-auto max-w-6xl px-5 py-12">
-          <div className="grid gap-12 lg:grid-cols-2">
-            <div>
-              <h2 className="text-2xl font-bold tracking-tight text-card-foreground">
-                Informações de contato
-              </h2>
-              <p className="mt-4 text-muted-foreground">
-                Entre em contato conosco através dos canais abaixo:
-              </p>
+        <div className="mx-auto grid max-w-6xl gap-10 px-5 py-12 lg:grid-cols-[1fr_1.5fr]">
+          <div>
+            <h2 className="text-2xl font-bold text-card-foreground">Fale com o Parafa</h2>
+            <p className="mt-4 text-muted-foreground">Use o formulário ou escreva diretamente para:</p>
+            <a href="mailto:contato@parafa.com.br" className="mt-5 inline-flex items-center gap-3 font-medium text-primary hover:underline">
+              <Mail className="size-5" /> contato@parafa.com.br
+            </a>
+          </div>
 
-              <div className="mt-8 space-y-6">
-                <div className="flex items-start gap-4">
-                  <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-secondary">
-                    <Mail className="size-6 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-card-foreground">Email</h3>
-                    <p className="mt-1 text-muted-foreground">contato@parafa.com.br</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-secondary">
-                    <Phone className="size-6 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-card-foreground">Telefone</h3>
-                    <p className="mt-1 text-muted-foreground">(41) 1234-5678</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-secondary">
-                    <MapPin className="size-6 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-card-foreground">Endereço</h3>
-                    <p className="mt-1 text-muted-foreground">
-                      Curitiba, Paraná - Brasil
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-border bg-card p-8">
-              <h2 className="text-2xl font-bold tracking-tight text-card-foreground">
-                Envie uma mensagem
-              </h2>
-
-              <form onSubmit={handleSubmit} className="mt-6 space-y-6">
-                <div>
-                  <label htmlFor="name" className="mb-2 block text-sm font-medium text-card-foreground">
-                    Nome *
-                  </label>
-                  <input
-                    id="name"
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full rounded-lg border border-border bg-background px-4 py-3 text-card-foreground outline-none transition-colors focus:border-primary"
-                    placeholder="Seu nome"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="email" className="mb-2 block text-sm font-medium text-card-foreground">
-                    Email *
-                  </label>
-                  <input
-                    id="email"
-                    type="email"
-                    required
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full rounded-lg border border-border bg-background px-4 py-3 text-card-foreground outline-none transition-colors focus:border-primary"
-                    placeholder="seu@email.com"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="subject" className="mb-2 block text-sm font-medium text-card-foreground">
-                    Assunto *
-                  </label>
-                  <input
-                    id="subject"
-                    type="text"
-                    required
-                    value={formData.subject}
-                    onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                    className="w-full rounded-lg border border-border bg-background px-4 py-3 text-card-foreground outline-none transition-colors focus:border-primary"
-                    placeholder="Assunto da mensagem"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="message" className="mb-2 block text-sm font-medium text-card-foreground">
-                    Mensagem *
-                  </label>
-                  <textarea
-                    id="message"
-                    required
-                    rows={5}
-                    value={formData.message}
-                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    className="w-full rounded-lg border border-border bg-background px-4 py-3 text-card-foreground outline-none transition-colors focus:border-primary resize-none"
-                    placeholder="Sua mensagem..."
-                  />
-                </div>
-
-                {error && (
-                  <p className="text-sm text-red-500">{error}</p>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? (
-                    "Enviando..."
-                  ) : (
-                    <>
-                      <Send className="size-4" />
-                      Enviar mensagem
-                    </>
-                  )}
+          <div className="rounded-2xl border border-border bg-card p-6 md:p-8">
+            {protocol ? (
+              <div role="status" className="py-8 text-center">
+                <CheckCircle className="mx-auto size-12 text-green-600" />
+                <h2 className="mt-4 text-2xl font-bold">Mensagem recebida</h2>
+                <p className="mt-3 text-muted-foreground">Responderemos pelo e-mail informado.</p>
+                <p className="mt-3 text-sm text-muted-foreground">Protocolo: <strong>{protocol}</strong></p>
+                <button type="button" onClick={() => setProtocol("")} className="mt-6 rounded-lg bg-primary px-5 py-3 font-semibold text-primary-foreground">
+                  Enviar outra mensagem
                 </button>
-              </form>
-            </div>
+              </div>
+            ) : (
+              <>
+                <h2 className="text-2xl font-bold text-card-foreground">Envie uma mensagem</h2>
+                <form onSubmit={handleSubmit} className="mt-6 space-y-5">
+                  <label className="block text-sm font-medium">Nome *
+                    <input name="name" required minLength={2} maxLength={150} autoComplete="name" className={inputClass} />
+                  </label>
+                  <label className="block text-sm font-medium">E-mail *
+                    <input name="email" type="email" required maxLength={254} autoComplete="email" className={inputClass} />
+                  </label>
+                  <label className="block text-sm font-medium">Telefone
+                    <input name="phone" type="tel" maxLength={30} autoComplete="tel" className={inputClass} />
+                  </label>
+                  <label className="block text-sm font-medium">CNPJ ou nome da empresa
+                    <input name="company" maxLength={200} className={inputClass} />
+                  </label>
+                  <label className="block text-sm font-medium">Mensagem *
+                    <textarea name="message" required minLength={10} maxLength={3000} rows={6} className={inputClass} />
+                  </label>
+                  <input name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hidden" />
+                  {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
+                  <button type="submit" disabled={loading} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 font-semibold text-primary-foreground disabled:opacity-50">
+                    <Send className="size-4" /> {loading ? "Enviando…" : "Enviar mensagem"}
+                  </button>
+                </form>
+              </>
+            )}
           </div>
         </div>
       </main>
-
       <SiteFooter />
     </div>
   );

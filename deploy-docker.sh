@@ -68,4 +68,4 @@ echo "📋 Logs recentes:"
 docker logs --tail 30 parafa-frontend || true
 ENDSSH
 
-echo "✅ Deploy concluído: http://${SERVER_IP}:3000"
+echo "✅ Deploy concluído: frontend disponível pelo proxy HTTPS do domínio"

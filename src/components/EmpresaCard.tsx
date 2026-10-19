@@ -31,7 +31,7 @@ export function EmpresaCard({ empresa }: EmpresaCardProps) {
       </div>
 
       <h2 className="mt-4 text-base font-semibold leading-snug text-card-foreground line-clamp-2">
-        <Link href={empresa.url} className="hover:text-primary transition-colors">
+        <Link href={empresa.url} prefetch={false} className="hover:text-primary transition-colors">
           {empresa.name}
         </Link>
       </h2>
@@ -45,6 +45,7 @@ export function EmpresaCard({ empresa }: EmpresaCardProps) {
         {mainPhone ? (
           <Link
             href={empresa.url}
+            prefetch={false}
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground hover:text-primary transition-colors"
             title="Ver telefone da empresa"
           >
@@ -79,6 +80,7 @@ export function EmpresaCard({ empresa }: EmpresaCardProps) {
         </span>
         <Link
           href={empresa.url}
+          prefetch={false}
           className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline shrink-0"
         >
           Ver detalhes <ArrowRight className="size-3.5" />

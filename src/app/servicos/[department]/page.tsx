@@ -3,8 +3,8 @@ import { ArrowRight } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { AdSlot } from "@/components/AdSlot";
-import { fetchCategorias } from "@/lib/api";
-import { notFound } from "next/navigation";
+import { fetchDepartamento } from "@/lib/api";
+import { requiredData } from "@/lib/page-data";
 import type { Metadata } from "next";
 
 interface PageProps {
@@ -16,38 +16,26 @@ interface PageProps {
 export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  try {
     const { department } = await params;
+    await requiredData(fetchDepartamento(department));
     const departmentFormatted = department.replace(/-/g, ' ');
     
     return {
+      alternates: { canonical: `/servicos/${department}` },
       title: `${departmentFormatted} | Parafa`,
       description: `Encontre empresas de ${departmentFormatted} em todo o Brasil.`,
       openGraph: {
         title: `${departmentFormatted} | Parafa`,
-        description: `Busque empresas de ${departmentFormatted} com telefone, endereço e avaliações.`,
+        description: `Busque empresas de ${departmentFormatted} com telefone e endereço.`,
       },
     };
-  } catch {
-    return {
-      title: "Serviços | Parafa",
-    };
-  }
 }
 
 export default async function ServicosDepartmentPage({ params }: PageProps) {
-  try {
     const { department } = await params;
-    const departmentFormatted = department.replace(/-/g, ' ');
-    
-    const categoriasData = await fetchCategorias();
-    const departmentCategorias = categoriasData.data.filter(
-      cat => cat.department_id === parseInt(department.replace('departamento-', ''))
-    );
-
-    if (departmentCategorias.length === 0) {
-      notFound();
-    }
+    const departamento = await requiredData(fetchDepartamento(department));
+    const departmentFormatted = departamento.name;
+    const departmentCategorias = departamento.categories ?? [];
 
     return (
       <div className="min-h-screen bg-background">
@@ -110,15 +98,4 @@ export default async function ServicosDepartmentPage({ params }: PageProps) {
         <SiteFooter />
       </div>
     );
-  } catch (error) {
-    return (
-      <div className="min-h-screen bg-background">
-        <SiteHeader />
-        <main className="mx-auto max-w-6xl px-5 py-12">
-          <p className="text-center text-red-500">Erro ao carregar departamento.</p>
-        </main>
-        <SiteFooter />
-      </div>
-    );
-  }
 }

@@ -7,6 +7,7 @@ import { fetchCategorias } from "@/lib/api";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/categorias' },
   title: "Categorias | Parafa",
   description:
     "Navegue por todas as categorias do guia Parafa: restaurantes, hotéis, saúde, lojas, serviços e muito mais em todo o Brasil.",

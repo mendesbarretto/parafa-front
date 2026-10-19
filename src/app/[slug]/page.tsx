@@ -4,7 +4,10 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { AdSlot } from "@/components/AdSlot";
 import { EmpresaCard } from "@/components/EmpresaCard";
-import { fetchEmpresas, fetchCidades, fetchEstados } from "@/lib/api";
+import { CompanyPagination } from "@/components/CompanyPagination";
+import { fetchEmpresas, fetchCidades } from "@/lib/api";
+import { requireCityFromPath } from "@/lib/city-page";
+import { paginatedCanonical } from "@/lib/canonical";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
@@ -12,6 +15,7 @@ interface PageProps {
   params: Promise<{
     slug: string;
   }>;
+  searchParams: Promise<{ page?: string }>;
 }
 
 // Mapeamento de nomes de estados para UFs
@@ -31,6 +35,7 @@ const estadoNomeParaUF: Record<string, string> = {
   "minas-gerais": "MG",
   "para": "PA",
   "paraiba": "PB",
+  "parana": "PR",
   "pernambuco": "PE",
   "piaui": "PI",
   "rio-de-janeiro": "RJ",
@@ -60,6 +65,7 @@ const ufParaNome: Record<string, string> = {
   "MG": "Minas Gerais",
   "PA": "Pará",
   "PB": "Paraíba",
+  "PR": "Paraná",
   "PE": "Pernambuco",
   "PI": "Piauí",
   "RJ": "Rio de Janeiro",
@@ -75,8 +81,7 @@ const ufParaNome: Record<string, string> = {
 
 export const dynamic = 'force-dynamic';
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  try {
+export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
     const { slug } = await params;
     const slugLower = slug.toLowerCase();
     
@@ -85,11 +90,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     if (uf) {
       const estadoNomeFormatado = ufParaNome[uf];
       return {
+        alternates: { canonical: `/${slugLower}` },
         title: `Empresas em ${estadoNomeFormatado} | Parafa`,
-        description: `Encontre empresas cadastradas em ${estadoNomeFormatado}: telefone, endereço, horários e avaliações.`,
+        description: `Encontre empresas cadastradas em ${estadoNomeFormatado}: telefone e endereço.`,
         openGraph: {
           title: `Empresas em ${estadoNomeFormatado} | Parafa`,
-          description: `Busque empresas em ${estadoNomeFormatado} com telefone, endereço e avaliações.`,
+          description: `Busque empresas em ${estadoNomeFormatado} com telefone e endereço.`,
         },
       };
     }
@@ -99,28 +105,22 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     if (parts.length >= 2) {
       const uf = parts[parts.length - 1].toUpperCase();
       const cidade = parts.slice(0, -1).join('-');
+      await requireCityFromPath(slug);
       return {
+        alternates: { canonical: paginatedCanonical(`/${slugLower}`, (await searchParams).page) },
         title: `Empresas em ${cidade}/${uf} | Parafa`,
-        description: `Encontre empresas cadastradas em ${cidade}, ${uf}: telefone, endereço, horários e avaliações.`,
+        description: `Encontre empresas cadastradas em ${cidade}, ${uf}: telefone e endereço.`,
         openGraph: {
           title: `Empresas em ${cidade}/${uf} | Parafa`,
-          description: `Busque empresas em ${cidade}, ${uf} com telefone, endereço e avaliações.`,
+          description: `Busque empresas em ${cidade}, ${uf} com telefone e endereço.`,
         },
       };
     }
     
-    return {
-      title: "Página não encontrada | Parafa",
-    };
-  } catch {
-    return {
-      title: "Erro ao carregar página | Parafa",
-    };
-  }
+    notFound();
 }
 
-export default async function SlugPage({ params }: PageProps) {
-  try {
+export default async function SlugPage({ params, searchParams }: PageProps) {
     const { slug } = await params;
     const slugLower = slug.toLowerCase();
     
@@ -128,8 +128,10 @@ export default async function SlugPage({ params }: PageProps) {
     const uf = estadoNomeParaUF[slugLower];
     if (uf) {
       const estadoNomeFormatado = ufParaNome[uf];
-      const empresasData = await fetchEmpresas({ state: uf, include_inactive: true, per_page: 20 });
-      const cidades = await fetchCidades(uf);
+      const [empresasData, cidades] = await Promise.all([
+        fetchEmpresas({ state: uf, include_inactive: true, per_page: 20 }),
+        fetchCidades(uf),
+      ]);
 
       return (
         <div className="min-h-screen bg-background">
@@ -168,7 +170,8 @@ export default async function SlugPage({ params }: PageProps) {
                 {cidades.slice(0, 12).map((cidade) => (
                   <Link
                     key={cidade.id}
-                    href={`/${cidade.url}`}
+                    href={`/${cidade.url}-${cidade.state.toLowerCase()}`}
+                    prefetch={false}
                     className="group flex items-center gap-4 rounded-2xl border border-border bg-card p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[var(--shadow-soft)]"
                   >
                     <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-secondary text-sm font-extrabold text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
@@ -217,13 +220,16 @@ export default async function SlugPage({ params }: PageProps) {
     if (parts.length >= 2) {
       const uf = parts[parts.length - 1].toUpperCase();
       const cidade = parts.slice(0, -1).join('-');
+      const city = await requireCityFromPath(slug);
+      const requestedPage = Number.parseInt((await searchParams).page || '1', 10);
+      const page = Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1;
       
       // Buscar empresas desta cidade
       const empresasData = await fetchEmpresas({
-        city_url: cidade,
-        state: uf,
+        city_id: city.id,
         include_inactive: true,
-        per_page: 50,
+        per_page: 20,
+        page,
       });
       const empresasCidade = empresasData.data;
 
@@ -247,7 +253,7 @@ export default async function SlugPage({ params }: PageProps) {
                     Empresas em {cidade}
                   </h1>
                   <p className="mt-1 text-sm text-primary-foreground/80">
-                    {empresasCidade.length} empresas cadastradas
+                    {empresasData.meta.total} empresas cadastradas
                   </p>
                 </div>
               </div>
@@ -269,6 +275,8 @@ export default async function SlugPage({ params }: PageProps) {
                 </div>
               )}
 
+              <CompanyPagination basePath={`/${slug}`} page={page} lastPage={empresasData.meta.last_page} />
+
               <div className="mt-14">
                 <AdSlot format="leaderboard" />
               </div>
@@ -281,15 +289,4 @@ export default async function SlugPage({ params }: PageProps) {
     }
     
     notFound();
-  } catch (error) {
-    return (
-      <div className="min-h-screen bg-background">
-        <SiteHeader />
-        <main className="mx-auto max-w-6xl px-5 py-12">
-          <p className="text-center text-red-500">Erro ao carregar dados.</p>
-        </main>
-        <SiteFooter />
-      </div>
-    );
-  }
 }

@@ -2,6 +2,7 @@ import { ContatoClient } from "./ContatoClient";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/contato' },
   title: "Contato | Parafa",
   description: "Entre em contato conosco. Dúvidas, sugestões ou parcerias.",
   openGraph: {

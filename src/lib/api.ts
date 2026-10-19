@@ -1,7 +1,19 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 
-  (process.env.NODE_ENV === 'production' 
-    ? 'https://api.parafa.com.br/api' 
-    : 'http://localhost:8000/api');
+const apiBaseUrl = () => typeof window === 'undefined'
+  ? (process.env.API_URL || 'http://localhost:8000/api')
+  : '/api/backend';
+
+const apiHeaders = (): HeadersInit => ({
+  Accept: 'application/json',
+  ...(typeof window === 'undefined' && process.env.INTERNAL_API_KEY
+    ? { 'X-API-Key': process.env.INTERNAL_API_KEY } : {}),
+});
+
+export class ApiNotFoundError extends Error {}
+
+function assertApiResponse(response: Response, resource: string): void {
+  if (response.status === 404) throw new ApiNotFoundError(`${resource} não encontrado`);
+  if (!response.ok) throw new Error(`Failed to fetch ${resource}: HTTP ${response.status}`);
+}
 
 export interface EmpresaPhone {
   type: number;
@@ -43,12 +55,11 @@ export interface Empresa {
   whatsapp?: string | null;
   whatsapp_url?: string | null;
   phones?: EmpresaPhone[];
+  facebook?: string | null;
+  instagram?: string | null;
+  twitter?: string | null;
+  other_cities?: Pick<Cidade, 'id' | 'name' | 'state' | 'url'>[];
 }
-
-const DEFAULT_HEADERS: Record<string, string> = {
-  'Accept': 'application/json',
-  'X-API-Key': process.env.INTERNAL_API_KEY || 'parafa_api_2024_secure_key',
-};
 
 export interface Categoria {
   id: number;
@@ -58,6 +69,14 @@ export interface Categoria {
   customers_count: number;
   department_name?: string;
   department_url?: string;
+}
+
+export interface Departamento {
+  id: number;
+  name: string;
+  url: string;
+  categories_count?: number;
+  categories?: Categoria[];
 }
 
 export interface Cidade {
@@ -93,7 +112,7 @@ export async function fetchEmpresas(params?: {
   include_inactive?: boolean;
   search?: string;
   page?: number;
-}): Promise<ApiResponse<Empresa>> {
+}, signal?: AbortSignal): Promise<ApiResponse<Empresa>> {
   const queryParams = new URLSearchParams();
   if (params?.per_page) queryParams.append('per_page', params.per_page.toString());
   if (params?.category_id) queryParams.append('category_id', params.category_id.toString());
@@ -106,8 +125,8 @@ export async function fetchEmpresas(params?: {
   if (params?.search) queryParams.append('search', params.search);
   if (params?.page) queryParams.append('page', params.page.toString());
 
-  const url = `${API_BASE_URL}/empresas${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-  const response = await fetch(url, { headers: DEFAULT_HEADERS });
+  const url = `${apiBaseUrl()}/empresas${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+  const response = await fetch(url, { headers: apiHeaders(), signal });
   
   if (!response.ok) {
     throw new Error(`Failed to fetch empresas: ${response.statusText}`);
@@ -116,18 +135,21 @@ export async function fetchEmpresas(params?: {
   return response.json();
 }
 
+export async function fetchEmpresasRecentes(): Promise<{ data: Empresa[] }> {
+  const response = await fetch(`${apiBaseUrl()}/empresas/recentes`, { headers: apiHeaders() });
+  if (!response.ok) throw new Error(`Failed to fetch empresas recentes: ${response.statusText}`);
+  return response.json();
+}
+
 export async function fetchEmpresa(id: string): Promise<Empresa> {
-  const response = await fetch(`${API_BASE_URL}/empresas/${id}`, { headers: DEFAULT_HEADERS });
-  
-  if (!response.ok) {
-    throw new Error(`Failed to fetch empresa: ${response.statusText}`);
-  }
+  const response = await fetch(`${apiBaseUrl()}/empresas/${id}`, { headers: apiHeaders() });
+  assertApiResponse(response, 'empresa');
   
   return response.json();
 }
 
 export async function fetchCategorias(): Promise<ApiResponse<Categoria>> {
-  const response = await fetch(`${API_BASE_URL}/categorias`, { headers: DEFAULT_HEADERS });
+  const response = await fetch(`${apiBaseUrl()}/categorias`, { headers: apiHeaders() });
   
   if (!response.ok) {
     throw new Error(`Failed to fetch categorias: ${response.statusText}`);
@@ -137,18 +159,33 @@ export async function fetchCategorias(): Promise<ApiResponse<Categoria>> {
 }
 
 export async function fetchCategoria(id: string): Promise<Categoria> {
-  const response = await fetch(`${API_BASE_URL}/categorias/${id}`, { headers: DEFAULT_HEADERS });
+  const response = await fetch(`${apiBaseUrl()}/categorias/${id}`, { headers: apiHeaders() });
+  assertApiResponse(response, 'categoria');
   
-  if (!response.ok) {
-    throw new Error(`Failed to fetch categoria: ${response.statusText}`);
-  }
-  
+  return response.json();
+}
+
+export async function fetchDepartamentos(): Promise<Departamento[]> {
+  const response = await fetch(`${apiBaseUrl()}/departamentos`, { headers: apiHeaders() });
+  if (!response.ok) throw new Error(`Failed to fetch departamentos: ${response.statusText}`);
+  return response.json();
+}
+
+export async function fetchDepartamento(slug: string): Promise<Departamento> {
+  const response = await fetch(`${apiBaseUrl()}/departamentos/${encodeURIComponent(slug)}`, { headers: apiHeaders() });
+  assertApiResponse(response, 'departamento');
+  return response.json();
+}
+
+export async function fetchCidadePorSlug(state: string, slug: string): Promise<Cidade> {
+  const response = await fetch(`${apiBaseUrl()}/cidades/slug/${encodeURIComponent(state)}/${encodeURIComponent(slug)}`, { headers: apiHeaders() });
+  assertApiResponse(response, 'cidade');
   return response.json();
 }
 
 export async function fetchCidades(state?: string): Promise<Cidade[]> {
   const queryParams = state ? `?state=${state}` : '';
-  const response = await fetch(`${API_BASE_URL}/cidades${queryParams}`, { headers: DEFAULT_HEADERS });
+  const response = await fetch(`${apiBaseUrl()}/cidades${queryParams}`, { headers: apiHeaders() });
   
   if (!response.ok) {
     throw new Error(`Failed to fetch cidades: ${response.statusText}`);
@@ -158,7 +195,7 @@ export async function fetchCidades(state?: string): Promise<Cidade[]> {
 }
 
 export async function fetchCidade(id: string): Promise<Cidade> {
-  const response = await fetch(`${API_BASE_URL}/cidades/${id}`, { headers: DEFAULT_HEADERS });
+  const response = await fetch(`${apiBaseUrl()}/cidades/${id}`, { headers: apiHeaders() });
   
   if (!response.ok) {
     throw new Error(`Failed to fetch cidade: ${response.statusText}`);
@@ -168,7 +205,7 @@ export async function fetchCidade(id: string): Promise<Cidade> {
 }
 
 export async function fetchEstados(): Promise<string[]> {
-  const response = await fetch(`${API_BASE_URL}/estados`, { headers: DEFAULT_HEADERS });
+  const response = await fetch(`${apiBaseUrl()}/estados`, { headers: apiHeaders() });
   
   if (!response.ok) {
     throw new Error(`Failed to fetch estados: ${response.statusText}`);

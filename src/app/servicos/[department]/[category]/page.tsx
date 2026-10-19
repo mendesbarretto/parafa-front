@@ -3,7 +3,8 @@ import { ArrowRight } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { AdSlot } from "@/components/AdSlot";
-import { fetchEmpresas, fetchCategorias } from "@/lib/api";
+import { fetchEmpresas, fetchDepartamento } from "@/lib/api";
+import { requiredData } from "@/lib/page-data";
 import { EmpresaCard } from "@/components/EmpresaCard";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -18,38 +19,34 @@ interface PageProps {
 export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  try {
     const { department, category } = await params;
+    const departamento = await requiredData(fetchDepartamento(department));
+    if (!departamento.categories?.some((entry) => entry.url === category)) notFound();
     const categoryFormatted = category.replace(/-/g, ' ');
     
     return {
+      alternates: { canonical: `/servicos/${department}/${category}` },
       title: `${categoryFormatted} | Parafa`,
       description: `Encontre empresas de ${categoryFormatted} em todo o Brasil.`,
       openGraph: {
         title: `${categoryFormatted} | Parafa`,
-        description: `Busque empresas de ${categoryFormatted} com telefone, endereço e avaliações.`,
+        description: `Busque empresas de ${categoryFormatted} com telefone e endereço.`,
       },
     };
-  } catch {
-    return {
-      title: "Serviços | Parafa",
-    };
-  }
 }
 
 export default async function ServicosDepartmentCategoryPage({ params }: PageProps) {
-  try {
     const { department, category } = await params;
     const categoryFormatted = category.replace(/-/g, ' ');
     
-    const categoriasData = await fetchCategorias();
-    const categoriaEncontrada = categoriasData.data.find(c => c.url === category);
+    const departamento = await requiredData(fetchDepartamento(department));
+    const categoriaEncontrada = departamento.categories?.find(c => c.url === category);
     
     if (!categoriaEncontrada) {
       notFound();
     }
     
-    const empresasData = await fetchEmpresas({ category_id: categoriaEncontrada.id, per_page: 20 });
+    const empresasData = await fetchEmpresas({ category_id: categoriaEncontrada.id, include_inactive: true, per_page: 20 });
 
     return (
       <div className="min-h-screen bg-background">
@@ -108,15 +105,4 @@ export default async function ServicosDepartmentCategoryPage({ params }: PagePro
         <SiteFooter />
       </div>
     );
-  } catch (error) {
-    return (
-      <div className="min-h-screen bg-background">
-        <SiteHeader />
-        <main className="mx-auto max-w-6xl px-5 py-12">
-          <p className="text-center text-red-500">Erro ao carregar categoria.</p>
-        </main>
-        <SiteFooter />
-      </div>
-    );
-  }
 }

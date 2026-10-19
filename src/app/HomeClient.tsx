@@ -21,7 +21,7 @@ import { AdSlot } from "@/components/AdSlot";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { useState, useEffect } from "react";
-import { fetchEmpresas, type Empresa } from "@/lib/api";
+import { fetchEmpresasRecentes, type Empresa } from "@/lib/api";
 import { EmpresaCard } from "@/components/EmpresaCard";
 
 const categorias = [
@@ -57,7 +57,7 @@ export function HomeClient() {
   const loadDestaques = async () => {
     try {
       setLoadingDestaques(true);
-      const data = await fetchEmpresas({ per_page: 12 });
+      const data = await fetchEmpresasRecentes();
       setDestaques(data.data);
     } catch (error) {
       console.error("Erro ao carregar destaques:", error);
@@ -228,7 +228,11 @@ export function HomeClient() {
                 onClick={() => {
                   setLoadingSlug(estado.uf);
                   // Usar nome do estado no formato slug (ex: bahia ao invés de ba)
-                  const estadoSlug = estado.nome.toLowerCase().replace(/ /g, '-');
+                  const estadoSlug = estado.nome
+                    .normalize("NFD")
+                    .replace(/[\u0300-\u036f]/g, "")
+                    .toLowerCase()
+                    .replace(/ /g, "-");
                   router.push(`/${estadoSlug}`);
                 }}
                 disabled={loadingSlug === estado.uf}

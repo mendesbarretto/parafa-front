@@ -7,9 +7,10 @@ import { fetchEstados } from "@/lib/api";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/estados' },
   title: "Empresas por estado | Parafa",
   description:
-    "Busque empresas cadastradas no Parafa em todos os estados do Brasil: telefone, endereço, horários e avaliações.",
+    "Busque empresas cadastradas no Parafa em todos os estados do Brasil: telefone e endereço.",
   openGraph: {
     title: "Empresas por estado | Parafa",
     description: "Navegue pelo guia de empresas em todos os estados brasileiros.",

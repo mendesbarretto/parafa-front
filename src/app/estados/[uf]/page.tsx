@@ -24,10 +24,8 @@ interface PageProps {
 }
 
 export const dynamic = 'force-dynamic';
-export const revalidate = 300; // Revalida a cada 5 minutos
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  try {
     const { uf } = await params;
     const ufUpper = uf.toUpperCase();
     
@@ -45,31 +43,21 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const estadoNome = estadoNomes[ufUpper];
     
     if (!estadoNome) {
-      return {
-        title: "Estado não encontrado | Parafa",
-        robots: {
-          index: false,
-        },
-      };
+      notFound();
     }
 
     return {
+      alternates: { canonical: `/${estadoNome.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ /g, '-')}` },
       title: `Empresas em ${estadoNome} | Parafa`,
-      description: `Encontre empresas cadastradas em ${estadoNome}: telefone, endereço, horários e avaliações.`,
+      description: `Encontre empresas cadastradas em ${estadoNome}: telefone e endereço.`,
       openGraph: {
         title: `Empresas em ${estadoNome} | Parafa`,
-        description: `Busque empresas em ${estadoNome} com telefone, endereço e avaliações.`,
+        description: `Busque empresas em ${estadoNome} com telefone e endereço.`,
       },
     };
-  } catch {
-    return {
-      title: "Erro ao carregar estado | Parafa",
-    };
-  }
 }
 
 export default async function EstadoDetalhePage({ params, searchParams }: PageProps) {
-  try {
     const { uf } = await params;
     const { page = '1' } = await searchParams;
     const ufUpper = uf.toUpperCase();
@@ -92,7 +80,7 @@ export default async function EstadoDetalhePage({ params, searchParams }: PagePr
       notFound();
     }
 
-    const empresasData = await fetchEmpresas({ state: ufUpper, per_page: 20, page: currentPage });
+    const empresasData = await fetchEmpresas({ state: ufUpper, include_inactive: true, per_page: 20, page: currentPage });
 
     return (
       <div className="min-h-screen bg-background">
@@ -182,15 +170,4 @@ export default async function EstadoDetalhePage({ params, searchParams }: PagePr
         <SiteFooter />
       </div>
     );
-  } catch (error) {
-    return (
-      <div className="min-h-screen bg-background">
-        <SiteHeader />
-        <main className="mx-auto max-w-6xl px-5 py-12">
-          <p className="text-center text-red-500">Erro ao carregar dados do estado.</p>
-        </main>
-        <SiteFooter />
-      </div>
-    );
-  }
 }

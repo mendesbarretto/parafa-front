@@ -6,6 +6,7 @@ import {
   Star,
   TrendingUp,
   Users,
+  Phone,
   BadgeCheck,
   CheckCircle2,
   ArrowRight,
@@ -29,9 +30,9 @@ const beneficios = [
     texto: "Milhares de pessoas usam o Parafa todos os dias para encontrar negócios locais.",
   },
   {
-    icon: Star,
-    titulo: "Avaliações",
-    texto: "Receba avaliações de clientes e construa sua reputação online.",
+    icon: Phone,
+    titulo: "Contato direto",
+    texto: "Facilite o contato de clientes com sua empresa por telefone e WhatsApp.",
   },
   {
     icon: BadgeCheck,

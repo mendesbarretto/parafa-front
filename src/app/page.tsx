@@ -2,9 +2,10 @@ import { HomeClient } from "./HomeClient";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/' },
   title: "Parafa | Guia de empresas e serviços no Brasil",
   description:
-    "Encontre hotéis, lojas, restaurantes e serviços mais bem avaliados perto de você. Mais de 1,7 milhão de empresas cadastradas no Brasil.",
+    "Encontre hotéis, lojas, restaurantes e serviços perto de você. Mais de 1,7 milhão de empresas cadastradas no Brasil.",
   openGraph: {
     title: "Parafa | Guia de empresas e serviços no Brasil",
     description:

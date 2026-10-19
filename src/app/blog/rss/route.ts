@@ -1,41 +1,14 @@
-import { NextResponse } from 'next/server';
+import { blogApi, type BlogPage } from '@/lib/blog';
+import { SITE_URL, xmlEscape } from '@/lib/xml';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://parafa.com.br';
-  
-  const rssXml = `<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
-  <channel>
-    <title>Parafa Blog</title>
-    <description>Dicas, novidades e informações sobre empresas e serviços</description>
-    <link>${baseUrl}/blog</link>
-    <atom:link href="${baseUrl}/blog/rss" rel="self" type="application/rss+xml" />
-    <language>pt-br</language>
-    <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
-    
-    <item>
-      <title>Como escolher o melhor restaurante para seu evento</title>
-      <description>Dicas práticas para selecionar o local perfeito para suas celebrações.</description>
-      <link>${baseUrl}/blog/como-escolher-melhor-restaurante-evento</link>
-      <pubDate>Mon, 10 Sep 2024 00:00:00 GMT</pubDate>
-      <guid isPermaLink="true">${baseUrl}/blog/como-escolher-melhor-restaurante-evento</guid>
-    </item>
-    
-    <item>
-      <title>Guia completo de serviços em Curitiba</title>
-      <description>Descubra os melhores profissionais e estabelecimentos da cidade.</description>
-      <link>${baseUrl}/blog/guia-completo-servicos-curitiba</link>
-      <pubDate>Sat, 08 Sep 2024 00:00:00 GMT</pubDate>
-      <guid isPermaLink="true">${baseUrl}/blog/guia-completo-servicos-curitiba</guid>
-    </item>
-  </channel>
-</rss>`;
-
-  return new NextResponse(rssXml, {
-    headers: {
-      'Content-Type': 'application/xml; charset=utf-8',
-    },
-  });
+  try {
+    const posts = await blogApi<BlogPage>('/blog/posts?per_page=50');
+    const items = posts.data.map(post => `<item><title>${xmlEscape(post.title)}</title><description>${xmlEscape(post.excerpt || '')}</description><link>${SITE_URL}/blog/${encodeURIComponent(post.slug)}</link><guid isPermaLink="true">${SITE_URL}/blog/${encodeURIComponent(post.slug)}</guid><pubDate>${new Date(post.published_at).toUTCString()}</pubDate></item>`).join('');
+    return new Response(`<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>Parafa Blog</title><link>${SITE_URL}/blog</link><description>Artigos e notícias do Parafa</description><language>pt-br</language>${items}</channel></rss>`, {
+      headers: { 'Content-Type': 'application/rss+xml; charset=utf-8', 'Cache-Control': 'public, max-age=300' },
+    });
+  } catch { return new Response('Blog indisponível', { status: 503 }); }
 }

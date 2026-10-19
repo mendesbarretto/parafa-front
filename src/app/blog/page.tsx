@@ -1,117 +1,53 @@
-import Link from "next/link";
-import { Calendar, Clock, ArrowRight } from "lucide-react";
-import { SiteHeader } from "@/components/SiteHeader";
-import { SiteFooter } from "@/components/SiteFooter";
-import type { Metadata } from "next";
+import Link from 'next/link';
+import type { Metadata } from 'next';
+import { SiteHeader } from '@/components/SiteHeader';
+import { SiteFooter } from '@/components/SiteFooter';
+import { BlogCards } from '@/components/BlogCards';
+import { blogApi, type BlogPage } from '@/lib/blog';
+import { paginatedCanonical } from '@/lib/canonical';
 
-export const metadata: Metadata = {
-  title: "Blog | Parafa",
-  description: "Dicas, novidades e informações sobre empresas e serviços.",
-  openGraph: {
-    title: "Blog | Parafa",
-    description: "Dicas, novidades e informações sobre empresas e serviços.",
-  },
-};
+export const dynamic = 'force-dynamic';
+export async function generateMetadata({ searchParams }: { searchParams: Promise<{ page?: string; busca?: string; categoria?: string }> }): Promise<Metadata> {
+  const { page, busca, categoria } = await searchParams;
+  return {
+    title: 'Blog | Parafa',
+    description: 'Artigos e notícias do Parafa.',
+    alternates: { canonical: busca || categoria ? '/blog' : paginatedCanonical('/blog', page) },
+    ...(busca || categoria ? { robots: { index: false, follow: true } } : {}),
+  };
+}
 
-// Mock data para o blog - substituir por dados reais do backend
-const blogPosts = [
-  {
-    id: 1,
-    title: "Como escolher o melhor restaurante para seu evento",
-    excerpt: "Dicas práticas para selecionar o local perfeito para suas celebrações.",
-    category: "Dicas",
-    date: "2024-09-10",
-    readTime: "5 min",
-    slug: "como-escolher-melhor-restaurante-evento",
-  },
-  {
-    id: 2,
-    title: "Guia completo de serviços em Curitiba",
-    excerpt: "Descubra os melhores profissionais e estabelecimentos da cidade.",
-    category: "Guias",
-    date: "2024-09-08",
-    readTime: "8 min",
-    slug: "guia-completo-servicos-curitiba",
-  },
-  {
-    id: 3,
-    title: "Dicas para encontrar bons profissionais",
-    excerpt: "Aprenda a identificar profissionais qualificados em qualquer área.",
-    category: "Dicas",
-    date: "2024-09-05",
-    readTime: "4 min",
-    slug: "dicas-encontrar-bons-profissionais",
-  },
-];
-
-export default function BlogPage() {
-  return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
-
-      <main>
-        <section className="hero-surface">
-          <div className="mx-auto max-w-6xl px-5 py-14 md:py-16">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary-foreground/70">
-              blog
-            </p>
-            <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-primary-foreground md:text-5xl">
-              Blog Parafa
-            </h1>
-            <p className="mt-4 max-w-xl text-primary-foreground/80">
-              Dicas, novidades e informações sobre empresas e serviços em todo o Brasil.
-            </p>
-          </div>
-        </section>
-
-        <div className="mx-auto max-w-6xl px-5 py-12">
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {blogPosts.map((post) => (
-              <article
-                key={post.id}
-                className="flex flex-col rounded-2xl border border-border bg-card p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-[var(--shadow-soft)]"
-              >
-                <div className="mb-4">
-                  <span className="inline-flex items-center rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-primary">
-                    {post.category}
-                  </span>
-                </div>
-
-                <h2 className="text-xl font-bold leading-snug text-card-foreground">
-                  <Link
-                    href={`/blog/${post.slug}`}
-                    className="hover:text-primary transition-colors"
-                  >
-                    {post.title}
-                  </Link>
-                </h2>
-
-                <p className="mt-3 line-clamp-3 text-muted-foreground">{post.excerpt}</p>
-
-                <div className="mt-4 flex items-center gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <Calendar className="size-4" />
-                    {new Date(post.date).toLocaleDateString('pt-BR')}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Clock className="size-4" />
-                    {post.readTime}
-                  </div>
-                </div>
-
-                <Link
-                  href={`/blog/${post.slug}`}
-                  className="mt-6 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
-                >
-                  Ler mais <ArrowRight className="size-3.5" />
-                </Link>
-              </article>
-            ))}
-          </div>
-        </div>
-      </main>
-
-      <SiteFooter />
+export default async function BlogPage({ searchParams }: { searchParams: Promise<{ page?: string; busca?: string; categoria?: string }> }) {
+  const { page: requestedPage, busca = '', categoria = '' } = await searchParams;
+  const page = Math.max(1, Number(requestedPage) || 1);
+  const query = new URLSearchParams({ page: String(page), per_page: '12' });
+  if (busca) query.set('search', busca);
+  if (categoria) query.set('category', categoria);
+  const [posts, categories] = await Promise.all([
+    blogApi<BlogPage>(`/blog/posts?${query}`),
+    blogApi<string[]>('/blog/categories'),
+  ]);
+  const pageHref = (target: number) => `/blog?${new URLSearchParams({ ...Object.fromEntries(query), page: String(target) })}`;
+  return <div className="min-h-screen bg-background"><SiteHeader /><main>
+    <section className="hero-surface"><div className="mx-auto max-w-6xl px-5 py-14">
+      <h1 className="text-4xl font-extrabold text-primary-foreground">Blog Parafa</h1>
+      <p className="mt-3 text-primary-foreground/80">Artigos e notícias sobre empresas e serviços.</p>
+    </div></section>
+    <div className="mx-auto max-w-6xl px-5 py-12">
+      <form action="/blog" method="get" className="mb-8 flex flex-wrap gap-3">
+        <input name="busca" defaultValue={busca} placeholder="Buscar artigos" aria-label="Buscar artigos" className="rounded-lg border border-border bg-card px-4 py-2" />
+        <select name="categoria" defaultValue={categoria} aria-label="Categoria" className="rounded-lg border border-border bg-card px-4 py-2">
+          <option value="">Todas as categorias</option>
+          {categories.map(category => <option key={category} value={category}>{category}</option>)}
+        </select>
+        <button type="submit" className="rounded-lg bg-primary px-4 py-2 text-primary-foreground">Buscar</button>
+      </form>
+      <BlogCards posts={posts.data} />
+      {posts.data.length === 0 && <p>Nenhum artigo publicado.</p>}
+      <nav aria-label="Paginação do blog" className="mt-10 flex gap-6">
+        {page > 1 && <Link href={pageHref(page - 1)} className="text-primary">← Anterior</Link>}
+        {page < posts.last_page && <Link href={pageHref(page + 1)} className="text-primary">Próxima →</Link>}
+      </nav>
     </div>
-  );
+  </main><SiteFooter /></div>;
 }

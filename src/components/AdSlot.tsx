@@ -12,7 +12,7 @@ const FORMAT_SIZES: Record<AdFormat, { width: number; height: number; label: str
 };
 
 interface AdSlotProps {
-  /** Google AdSense data-ad-slot id. Sem id, o espaço fica apenas reservado. */
+  /** Google AdSense data-ad-slot id. */
   slotId?: string;
   format?: AdFormat;
   className?: string;
@@ -32,17 +32,18 @@ export function AdSlot({
 }: AdSlotProps) {
   const size = FORMAT_SIZES[format];
   const insRef = useRef<HTMLModElement>(null);
-  const clientId = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID as string | undefined;
+  const clientId = "ca-pub-9322585020374860";
+  const effectiveSlotId = slotId ?? (format === "rectangle" ? "4065145505" : "8686916795");
 
   useEffect(() => {
-    if (!slotId || !clientId) return;
+    if (!effectiveSlotId || !insRef.current) return;
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
     } catch {
       /* anúncio indisponível */
     }
-  }, [slotId, clientId]);
+  }, [effectiveSlotId]);
 
   return (
     <aside
@@ -56,13 +57,13 @@ export function AdSlot({
         className="flex w-full max-w-full items-center justify-center overflow-hidden rounded-xl border border-dashed border-border bg-secondary/40"
         style={{ maxWidth: size.width, minHeight: size.height }}
       >
-        {slotId && clientId ? (
+        {effectiveSlotId ? (
           <ins
             ref={insRef}
             className="adsbygoogle block"
             style={{ display: "block", width: "100%", height: size.height }}
             data-ad-client={clientId}
-            data-ad-slot={slotId}
+            data-ad-slot={effectiveSlotId}
             data-ad-format="auto"
             data-full-width-responsive="true"
           />

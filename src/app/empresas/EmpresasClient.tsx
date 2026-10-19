@@ -8,24 +8,28 @@ import { AdSlot } from "@/components/AdSlot";
 import { fetchCategorias, fetchEmpresas, type Categoria, type Empresa } from "@/lib/api";
 import { EmpresaCard } from "@/components/EmpresaCard";
 
-export function EmpresasClient() {
-  const [termo, setTermo] = useState(() =>
-    typeof window === "undefined" ? "" : new URLSearchParams(window.location.search).get("search") || "",
-  );
-  const [location, setLocation] = useState(() =>
-    typeof window === "undefined" ? "" : new URLSearchParams(window.location.search).get("location") || "",
-  );
+interface EmpresasClientProps {
+  initialSearch: string;
+  initialLocation: string;
+  initialPage: number;
+}
+
+export function EmpresasClient({ initialSearch, initialLocation, initialPage }: EmpresasClientProps) {
+  const [termo, setTermo] = useState(initialSearch);
+  const [location, setLocation] = useState(initialLocation);
   const [categoria, setCategoria] = useState("Todas");
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(() => {
-    if (typeof window === "undefined") return 1;
-    const page = Number.parseInt(new URLSearchParams(window.location.search).get("page") || "1", 10);
-    return Number.isFinite(page) && page > 0 ? page : 1;
-  });
+  const [currentPage, setCurrentPage] = useState(initialPage);
   const [totalPages, setTotalPages] = useState(1);
   const [totalResults, setTotalResults] = useState(0);
   const [categoriasDisponiveis, setCategoriasDisponiveis] = useState<Categoria[]>([]);
+  const selectedCategoryId = useMemo(
+    () => categoria === "Todas"
+      ? undefined
+      : categoriasDisponiveis.find((item) => item.name === categoria)?.id,
+    [categoria, categoriasDisponiveis],
+  );
 
   useEffect(() => {
     fetchCategorias()
@@ -34,12 +38,15 @@ export function EmpresasClient() {
   }, []);
 
   useEffect(() => {
+    let active = true;
+    const controller = new AbortController();
+    setLoading(true);
     const timer = window.setTimeout(async () => {
       try {
-        setLoading(true);
         const params: {
           per_page?: number;
           search?: string;
+          city?: string;
           state?: string;
           category_id?: number;
           page?: number;
@@ -51,31 +58,36 @@ export function EmpresasClient() {
         if (termo.trim()) params.search = termo.trim();
 
         const uf = location.trim().toUpperCase();
-        if (uf.length === 2) params.state = uf;
-
-        if (categoria !== "Todas") {
-          const selected = categoriasDisponiveis.find(
-            (item) => item.name === categoria,
-          );
-          if (selected) params.category_id = selected.id;
+        if (uf.length === 2) {
+          params.state = uf;
+        } else if (location.trim()) {
+          params.city = location.trim();
         }
 
-        const data = await fetchEmpresas(params);
+        if (selectedCategoryId) params.category_id = selectedCategoryId;
+
+        const data = await fetchEmpresas(params, controller.signal);
+        if (!active) return;
         setEmpresas(data.data);
-        setTotalPages(data.meta.last_page);
+        setTotalPages(Math.min(data.meta.last_page, 100));
         setTotalResults(data.meta.total);
       } catch (error) {
+        if (!active) return;
         console.error("Erro ao carregar empresas:", error);
         setEmpresas([]);
         setTotalPages(1);
         setTotalResults(0);
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     }, 250);
 
-    return () => window.clearTimeout(timer);
-  }, [categoria, categoriasDisponiveis, currentPage, location, termo]);
+    return () => {
+      active = false;
+      controller.abort();
+      window.clearTimeout(timer);
+    };
+  }, [currentPage, location, selectedCategoryId, termo]);
 
   const categorias = useMemo(
     () => ["Todas", ...categoriasDisponiveis.map((item) => item.name)],
@@ -98,7 +110,7 @@ export function EmpresasClient() {
               Empresas cadastradas
             </h1>
             <p className="mt-4 max-w-xl text-primary-foreground/80">
-              Telefone, endereço, horários e avaliações dos negócios da sua região.
+              Telefone e endereço dos negócios da sua região.
             </p>
 
             <div className="mt-8 flex w-full max-w-xl items-center gap-2 rounded-2xl bg-card p-2 shadow-[var(--shadow-lift)]">
@@ -152,8 +164,12 @@ export function EmpresasClient() {
           </div>
 
           <p className="mt-6 text-sm text-muted-foreground">
-            {totalResults} {totalResults === 1 ? "empresa encontrada" : "empresas encontradas"}
-            {totalPages > 1 && ` (página ${currentPage} de ${totalPages})`}
+            {loading ? "Buscando empresas..." : (
+              <>
+                {totalResults} {totalResults === 1 ? "empresa encontrada" : "empresas encontradas"}
+                {totalPages > 1 && ` (página ${currentPage} de ${totalPages})`}
+              </>
+            )}
           </p>
 
           {loading ? (
@@ -193,7 +209,7 @@ export function EmpresasClient() {
             </div>
           )}
 
-          {totalPages > 1 && (
+          {!loading && totalPages > 1 && (
             <div className="mt-8 flex items-center justify-center gap-2">
               <button
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}

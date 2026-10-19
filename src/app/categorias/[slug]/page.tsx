@@ -4,6 +4,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { AdSlot } from "@/components/AdSlot";
 import { fetchEmpresas, fetchCategoria } from "@/lib/api";
+import { requiredData } from "@/lib/page-data";
 import { EmpresaCard } from "@/components/EmpresaCard";
 import type { Metadata } from "next";
 
@@ -16,31 +17,25 @@ interface PageProps {
 export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  try {
     const { slug } = await params;
-    const categoria = await fetchCategoria(slug);
+    const categoria = await requiredData(fetchCategoria(slug));
 
     return {
+      alternates: { canonical: `/categorias/${categoria.url}` },
       title: `${categoria.name} | Parafa`,
-      description: `Empresas de ${categoria.name} cadastradas no Parafa: telefone, endereço, horários e avaliações.`,
+      description: `Empresas de ${categoria.name} cadastradas no Parafa: telefone e endereço.`,
       openGraph: {
         title: `${categoria.name} | Parafa`,
-        description: `Encontre ${categoria.name} perto de você com telefone, endereço e avaliações.`,
+        description: `Encontre ${categoria.name} perto de você com telefone e endereço.`,
       },
     };
-  } catch {
-    return {
-      title: "Erro ao carregar categoria | Parafa",
-    };
-  }
 }
 
 export default async function CategoriaDetalhePage({ params }: PageProps) {
-  try {
     const { slug } = await params;
-    const categoria = await fetchCategoria(slug);
+    const categoria = await requiredData(fetchCategoria(slug));
 
-    const empresasData = await fetchEmpresas({ category_id: categoria.id, per_page: 20 });
+    const empresasData = await fetchEmpresas({ category_id: categoria.id, include_inactive: true, per_page: 20 });
 
     return (
       <div className="min-h-screen bg-background">
@@ -102,15 +97,4 @@ export default async function CategoriaDetalhePage({ params }: PageProps) {
         <SiteFooter />
       </div>
     );
-  } catch (error) {
-    return (
-      <div className="min-h-screen bg-background">
-        <SiteHeader />
-        <main className="mx-auto max-w-6xl px-5 py-12">
-          <p className="text-center text-red-500">Erro ao carregar dados da categoria.</p>
-        </main>
-        <SiteFooter />
-      </div>
-    );
-  }
 }
