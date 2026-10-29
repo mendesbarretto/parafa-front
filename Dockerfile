@@ -31,6 +31,12 @@ RUN adduser --system --uid 1001 nextjs
 RUN chown -R nextjs:nodejs /app/.next
 RUN chown -R nextjs:nodejs /app/public
 
+# Arquivos estáticos e públicos precisam acompanhar o servidor standalone.
+RUN mkdir -p /app/.next/standalone/.next \
+    && cp -a /app/.next/static /app/.next/standalone/.next/static \
+    && cp -a /app/public /app/.next/standalone/public \
+    && chown -R nextjs:nodejs /app/.next/standalone
+
 USER nextjs
 
 EXPOSE 3000
@@ -39,4 +45,4 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_OPTIONS="--max-old-space-size=128"
 
-CMD ["node", "server.js"]
+CMD ["node", ".next/standalone/server.js"]
